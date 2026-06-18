@@ -38,7 +38,7 @@ async function retryDelegatedExecution<T>(
   operation: () => Promise<T>,
   requestId: string,
 ): Promise<T> {
-  const delays = [0, 1_500, 3_000, 5_000];
+  const delays = [0, 1_000];
   let lastError: unknown;
 
   for (let attempt = 0; attempt < delays.length; attempt += 1) {
