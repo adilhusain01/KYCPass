@@ -7,7 +7,7 @@ import { invokeDisclosureContract } from "@/lib/t3/server-client";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 30;
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -49,8 +49,8 @@ export async function POST(request: Request) {
         purpose: body.requirement.purpose,
         claims: approvedClaims,
       }),
-      55_000,
-      "Terminal 3 disclosure execution timed out before returning a receipt.",
+      22_000,
+      "Terminal 3 disclosure execution exceeded the hosted function window before returning a receipt. The scoped grant is signed; retry execution or run the disclosure route on a longer-lived Node host.",
     );
     console.info(
       `[KYCPass:Disclosure] invoke succeeded request=${requestId} elapsed_ms=${Date.now() - startedAt}.`,

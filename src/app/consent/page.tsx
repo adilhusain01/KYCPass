@@ -25,6 +25,18 @@ type PublicConfig = {
 
 type ExecutionStage = "idle" | "config" | "grant" | "execute";
 
+async function readResponseBody(response: Response) {
+  const text = await response.text();
+  if (!text) return {};
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    return {
+      error: `Server returned non-JSON response: ${text.slice(0, 220)}`,
+    };
+  }
+}
+
 async function fetchJsonWithTimeout(
   input: RequestInfo | URL,
   init: RequestInit,
@@ -34,7 +46,7 @@ async function fetchJsonWithTimeout(
   const timer = window.setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetch(input, { ...init, signal: controller.signal });
-    const body = await response.json();
+    const body = await readResponseBody(response);
     return { response, body };
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {
@@ -50,6 +62,7 @@ export default function ConsentPage() {
   const router = useRouter();
   const [executing, setExecuting] = useState(false);
   const [stage, setStage] = useState<ExecutionStage>("idle");
+  const [grantSigned, setGrantSigned] = useState(false);
   const requirement = useWorkflowStore((state) => state.requirement);
   const userDid = useWorkflowStore((state) => state.userDid);
   const setReceipt = useWorkflowStore((state) => state.setReceipt);
@@ -87,16 +100,21 @@ export default function ConsentPage() {
           "TEE disclosure requires a public HTTPS verifier origin. Deploy KYCPass or configure a secure public tunnel before approving this grant.",
         );
       }
-      setStage("grant");
-      console.info("[KYCPass:Disclosure] Requesting scoped Terminal 3 grant signature.");
-      await grantDisclosureAccess({
-        agentDid: config.agentDid,
-        tenantDid: config.tenantDid,
-        contractTail: config.contractTail,
-        contractVersion: config.contractVersion,
-        verifierHost: new URL(config.verifierOrigin).hostname,
-      });
-      toast.success("Scoped Terminal 3 grant signed.");
+      if (!grantSigned) {
+        setStage("grant");
+        console.info("[KYCPass:Disclosure] Requesting scoped Terminal 3 grant signature.");
+        await grantDisclosureAccess({
+          agentDid: config.agentDid,
+          tenantDid: config.tenantDid,
+          contractTail: config.contractTail,
+          contractVersion: config.contractVersion,
+          verifierHost: new URL(config.verifierOrigin).hostname,
+        });
+        setGrantSigned(true);
+        toast.success("Scoped Terminal 3 grant signed.");
+      } else {
+        console.info("[KYCPass:Disclosure] Reusing scoped Terminal 3 grant from this page session.");
+      }
 
       const requestId = crypto.randomUUID();
       setStage("execute");
@@ -114,9 +132,10 @@ export default function ConsentPage() {
             approvedClaims: plan.claims,
           }),
         },
-        70_000,
+        35_000,
       );
-      if (!response.ok) throw new Error(body.error ?? "TEE disclosure failed.");
+      const parsedBody = body as { error?: string };
+      if (!response.ok) throw new Error(parsedBody.error ?? "TEE disclosure failed.");
       setReceipt(receiptSchema.parse(body));
       toast.success("Verifier accepted the protected disclosure.");
       router.push("/receipt");
@@ -191,7 +210,9 @@ export default function ConsentPage() {
                   : stage === "execute"
                     ? "Executing inside T3N"
                     : "Preparing disclosure"
-                : "Approve and disclose"}
+                : grantSigned
+                  ? "Retry T3 execution"
+                  : "Approve and disclose"}
             </Button>
             <Button asChild variant="neutral" className="w-full bg-white text-black">
               <Link href="/verifier">
