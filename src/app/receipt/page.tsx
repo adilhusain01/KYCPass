@@ -27,7 +27,6 @@ export default function ReceiptPage() {
   return (
     <div className="mx-auto max-w-[1100px] px-4 py-10 sm:px-6 sm:py-14">
       <PageHeader
-        eyebrow="Sanitized verifier response"
         title="Accepted without returning PII."
         description="The verifier confirms which claim categories were received. Raw values are intentionally absent from this receipt and from the agent response."
         badge="Verified"
@@ -77,4 +76,3 @@ export default function ReceiptPage() {
     </div>
   );
 }
-

@@ -33,7 +33,6 @@ export default function SettingsPage() {
   return (
     <div className="mx-auto max-w-[1180px] px-4 py-10 sm:px-6 sm:py-14">
       <PageHeader
-        eyebrow="Deployment configuration"
         title="Public facts only."
         description="This screen confirms the non-secret contract and verifier configuration. The developer key and verifier secret are never serialized into an API response."
         badge={

@@ -125,7 +125,6 @@ export default function OnboardingPage() {
   return (
     <div className="mx-auto max-w-[1480px] px-4 py-10 sm:px-6 sm:py-14">
       <PageHeader
-        eyebrow="Real testnet onboarding"
         title="Establish your private identity."
         description="MetaMask signs the encrypted Terminal 3 session, a same-origin relay preserves node affinity, and profile values are submitted to the protected user contract."
         badge={`${completed}/3 complete`}

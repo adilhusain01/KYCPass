@@ -62,7 +62,6 @@ export default function VerifierPage() {
   return (
     <div className="mx-auto max-w-[1480px] px-4 py-10 sm:px-6 sm:py-14">
       <PageHeader
-        eyebrow="Relying-party simulator"
         title="Request claims, not documents."
         description="This verifier creates a real, typed disclosure request. It cannot receive anything outside the selected claim set, and the user must approve the Terminal 3 grant before execution."
         badge="No file uploads"

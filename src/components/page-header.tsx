@@ -1,12 +1,10 @@
 import { Badge } from "@/components/ui/badge";
 
 export function PageHeader({
-  eyebrow,
   title,
   description,
   badge,
 }: {
-  eyebrow: string;
   title: string;
   description: string;
   badge?: string;
@@ -14,7 +12,6 @@ export function PageHeader({
   return (
     <header className="grid gap-5 border-b-2 border-black pb-8 md:grid-cols-[1fr_auto] md:items-end">
       <div>
-        <p className="code-type mb-3 text-xs font-semibold uppercase tracking-[0.2em]">{eyebrow}</p>
         <h1 className="display-type max-w-5xl text-[clamp(2.7rem,7vw,6.8rem)] font-extrabold leading-[0.88]">
           {title}
         </h1>
@@ -24,4 +21,3 @@ export function PageHeader({
     </header>
   );
 }
-

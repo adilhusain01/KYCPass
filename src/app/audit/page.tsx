@@ -37,7 +37,6 @@ export default function AuditPage() {
   return (
     <div className="mx-auto max-w-[1320px] px-4 py-10 sm:px-6 sm:py-14">
       <PageHeader
-        eyebrow="Terminal 3 evidence"
         title="Audit the actions, not the identity."
         description="The presentation layer intentionally reduces events to action, protected target, timestamp, and token movement. Profile values are never rendered here."
         badge={audit ? `${events.length} events` : "Not loaded"}

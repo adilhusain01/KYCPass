@@ -179,7 +179,6 @@ export default function ConsentPage() {
   return (
     <div className="mx-auto max-w-[1180px] px-4 py-10 sm:px-6 sm:py-14">
       <PageHeader
-        eyebrow="Human approval boundary"
         title="Inspect the exact disclosure."
         description="Approval creates a Terminal 3 grant restricted to one agent DID, one contract function, one contract version, and one verifier host."
         badge={`${plan.claims.length} claims`}

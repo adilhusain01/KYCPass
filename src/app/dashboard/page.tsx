@@ -52,7 +52,6 @@ export default function DashboardPage() {
   return (
     <div className="mx-auto max-w-[1480px] px-4 py-10 sm:px-6 sm:py-14">
       <PageHeader
-        eyebrow="Control room"
         title="Real state, no demo shortcuts."
         description="User readiness lives in the active wallet session. Agent usage and audit data are fetched server-side from Terminal 3 without exposing the developer key."
         badge={overview ? "Agent online" : error ? "Setup required" : "Connecting"}

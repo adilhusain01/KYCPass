@@ -41,7 +41,6 @@ export default function CredentialsPage() {
   return (
     <div className="mx-auto max-w-[1180px] px-4 py-10 sm:px-6 sm:py-14">
       <PageHeader
-        eyebrow="Credential registry"
         title="Only genuine issuance counts."
         description="Level 1 reflects the live onboarding session. Level 2 is read from Terminal 3 and is displayed exactly as returned; KYCPass does not initiate or invent provider approval."
         badge={userDid ? "Wallet session active" : "Connect wallet first"}
