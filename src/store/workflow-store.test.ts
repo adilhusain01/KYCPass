@@ -17,6 +17,7 @@ describe("workflow completion cache", () => {
       requirement: null,
       receipt: null,
       progressByDid: {},
+      receiptsByDid: {},
     });
   });
 
@@ -30,7 +31,6 @@ describe("workflow completion cache", () => {
     const persisted = localStorage.getItem("kycpass-did-progress");
     expect(persisted).toContain(DID_A);
     expect(persisted).not.toContain("person@example.com");
-    expect(persisted).not.toContain("0xaaa");
 
     useWorkflowStore.getState().setIdentity("0xbbb", DID_B);
     expect(useWorkflowStore.getState()).toMatchObject({
@@ -47,6 +47,48 @@ describe("workflow completion cache", () => {
       emailVerified: true,
       levelOneIssued: true,
     });
+  });
+
+  it("persists the active public DID and sanitized receipt across reloads", () => {
+    useWorkflowStore.getState().setIdentity("0xaaa", DID_A);
+    useWorkflowStore.getState().setReceipt({
+      receiptId: "6f7280a1-e133-4417-a426-488fdb70a8f1",
+      requestId: "8f7280a1-e133-4417-a426-488fdb70a8f1",
+      verifier: "Northstar Digital Bank",
+      status: "accepted",
+      kycLevel: "t3n.user-input.kyc.1",
+      disclosedClaims: ["full_name", "verified_email"],
+      verifiedAt: "2026-06-18T17:30:00.000Z",
+    });
+
+    const persisted = localStorage.getItem("kycpass-did-progress");
+    expect(persisted).toContain(DID_A);
+    expect(persisted).toContain("0xaaa");
+    expect(persisted).toContain("6f7280a1-e133-4417-a426-488fdb70a8f1");
+    expect(persisted).not.toContain("person@example.com");
+    expect(persisted).not.toContain("443653");
+    expect(persisted).not.toContain("Shaheen Bagh");
+  });
+
+  it("does not show one DID's receipt after switching to a different DID", () => {
+    useWorkflowStore.getState().setIdentity("0xaaa", DID_A);
+    useWorkflowStore.getState().setReceipt({
+      receiptId: "6f7280a1-e133-4417-a426-488fdb70a8f1",
+      requestId: "8f7280a1-e133-4417-a426-488fdb70a8f1",
+      verifier: "Northstar Digital Bank",
+      status: "accepted",
+      kycLevel: "t3n.user-input.kyc.1",
+      disclosedClaims: ["full_name"],
+      verifiedAt: "2026-06-18T17:30:00.000Z",
+    });
+
+    useWorkflowStore.getState().setIdentity("0xbbb", DID_B);
+    expect(useWorkflowStore.getState().receipt).toBeNull();
+
+    useWorkflowStore.getState().setIdentity("0xaaa", DID_A);
+    expect(useWorkflowStore.getState().receipt?.receiptId).toBe(
+      "6f7280a1-e133-4417-a426-488fdb70a8f1",
+    );
   });
 
   it("does not clear the per-DID completion cache on session reset", () => {

@@ -10,6 +10,15 @@ type DidProgress = {
   levelOneIssued: boolean;
 };
 
+type PersistedWorkflow = {
+  address: string | null;
+  userDid: string | null;
+  requirement: KycRequirement | null;
+  receipt: DisclosureReceipt | null;
+  progressByDid: Record<string, DidProgress>;
+  receiptsByDid: Record<string, DisclosureReceipt>;
+};
+
 type WorkflowState = {
   address: string | null;
   userDid: string | null;
@@ -19,6 +28,7 @@ type WorkflowState = {
   requirement: KycRequirement | null;
   receipt: DisclosureReceipt | null;
   progressByDid: Record<string, DidProgress>;
+  receiptsByDid: Record<string, DisclosureReceipt>;
   setIdentity: (address: string, userDid: string) => void;
   setOtpEmail: (email: string) => void;
   clearOtpEmail: () => void;
@@ -38,6 +48,7 @@ const initialState = {
   requirement: null,
   receipt: null,
   progressByDid: {},
+  receiptsByDid: {},
 };
 
 export const useWorkflowStore = create<WorkflowState>()(
@@ -54,7 +65,7 @@ export const useWorkflowStore = create<WorkflowState>()(
             emailVerified: progress?.emailVerified ?? false,
             levelOneIssued: progress?.levelOneIssued ?? false,
             requirement: null,
-            receipt: null,
+            receipt: state.receiptsByDid[userDid] ?? null,
           };
         }),
       setOtpEmail: (otpEmail) => set({ otpEmail }),
@@ -87,12 +98,30 @@ export const useWorkflowStore = create<WorkflowState>()(
             : state.progressByDid,
         })),
       setRequirement: (requirement) => set({ requirement }),
-      setReceipt: (receipt) => set({ receipt }),
-      reset: () => set((state) => ({ ...initialState, progressByDid: state.progressByDid })),
+      setReceipt: (receipt) =>
+        set((state) => ({
+          receipt,
+          receiptsByDid: state.userDid
+            ? { ...state.receiptsByDid, [state.userDid]: receipt }
+            : state.receiptsByDid,
+        })),
+      reset: () =>
+        set((state) => ({
+          ...initialState,
+          progressByDid: state.progressByDid,
+          receiptsByDid: state.receiptsByDid,
+        })),
     }),
     {
       name: "kycpass-did-progress",
-      partialize: (state) => ({ progressByDid: state.progressByDid }),
+      partialize: (state): PersistedWorkflow => ({
+        address: state.address,
+        userDid: state.userDid,
+        requirement: state.requirement,
+        receipt: state.receipt,
+        progressByDid: state.progressByDid,
+        receiptsByDid: state.receiptsByDid,
+      }),
     },
   ),
 );
