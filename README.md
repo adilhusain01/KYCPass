@@ -82,6 +82,19 @@ The browser smoke suite does not fake MetaMask. The complete wallet/OTP path is
 run manually or in CI with a real wallet extension profile and human-provided
 OTP. See [docs/DEMO.md](docs/DEMO.md).
 
+For a deployed build, verify the server-only Terminal 3 path before recording:
+
+```bash
+curl -fsS https://your-public-origin.example/api/config
+curl -fsS https://your-public-origin.example/api/agent/overview
+curl -fsS https://your-public-origin.example/api/disclosures/execute
+```
+
+The `GET /api/disclosures/execute` probe authenticates the server agent and
+loads the Terminal 3 execution stack only. It does not request or disclose user
+claims; the real disclosure path is `POST /api/disclosures/execute` after a
+user-signed grant.
+
 ## Documentation
 
 - [Architecture](docs/ARCHITECTURE.md)
@@ -95,6 +108,9 @@ OTP. See [docs/DEMO.md](docs/DEMO.md).
 ## Current scope
 
 Level 1, consent, TEE disclosure, receipt, audit, and usage are implemented.
+The receipt and token usage are the primary live evidence for the judged flow.
+Audit events are displayed when Terminal 3 returns them; a zero-event response
+for a DID is rendered explicitly and is not treated as fabricated evidence.
 Level-2 status is read and displayed only when Terminal 3 genuinely returns it.
 Level-2 initiation and the Chrome extension remain outside the judged core
 because no public initiation API is used and the web flow must remain the

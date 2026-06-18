@@ -54,6 +54,9 @@ request ID, verifier, KYC level, status, and claim set.
 OTPs, profile objects, contract secrets, or resolved values. Production
 observability must preserve this restriction. Browser diagnostics contain only
 sanitized operation names, outcomes, and generic error classifications.
+The disclosure health probe authenticates the server agent and loads the
+Terminal 3 execution stack, but it does not accept claim requests or return
+profile data.
 
 ## Operational requirements
 
@@ -61,7 +64,8 @@ sanitized operation names, outcomes, and generic error classifications.
 - Rotate the developer key and verifier secret after any suspected exposure.
 - Use a dedicated HTTPS verifier origin with no third-party request logging.
 - Disable body capture in proxies, APM tools, and serverless function logs.
-- Review Terminal 3 contract and grant audit events before each demo.
+- Review Terminal 3 contract status, grant behavior, token usage, and any audit
+  events Terminal 3 returns before each demo.
 - Never automate MetaMask using a wallet seed committed to the repository.
 
 ## Known boundary

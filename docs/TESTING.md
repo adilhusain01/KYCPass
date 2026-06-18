@@ -74,13 +74,29 @@ Then test:
 5. Execute the disclosure.
 6. Confirm `/receipt` shows only receipt metadata and claim names, never claim
    values.
-7. Open `/audit` and fetch telemetry.
+7. Open `/audit` and fetch telemetry. Token usage should load. Audit events may
+   be an empty Terminal 3 response for the DID; the UI must show that directly
+   and must not synthesize events.
+
+Before or after the browser run, execute the deployed health probes:
+
+```bash
+curl -fsS https://your-public-origin.example/api/config
+curl -fsS https://your-public-origin.example/api/agent/overview
+curl -fsS https://your-public-origin.example/api/disclosures/execute
+```
+
+`GET /api/disclosures/execute` is a non-disclosing server-agent probe. It proves
+the deployed function can authenticate and load the Terminal 3 execution stack.
+The only route that performs a user disclosure is the consent-driven `POST`.
 
 ## 4. Security spot checks
 
 - `/api/config` must not include `T3N_API_KEY` or `KYCPASS_VERIFIER_SECRET`.
 - `/api/verifier/submit` must return `401` without `x-kycpass-contract-secret`.
 - `/api/t3/api/admin` must return `404`.
+- `GET /api/disclosures/execute` must not include claim values, profile fields,
+  OTPs, wallet addresses, or secrets.
 - Browser local storage may contain `kycpass-did-progress`, but it must not
   contain OTPs, email addresses, wallet addresses, profile fields, signatures,
   or Terminal 3 session material.

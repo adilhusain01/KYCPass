@@ -1,4 +1,5 @@
 import { ArrowRight, DatabaseZap, EyeOff, KeyRound, ShieldCheck } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -27,10 +28,7 @@ export default function Home() {
       <section className="mx-auto max-w-[1480px] px-4 py-10 sm:px-6 sm:py-16">
         <div className="grid items-stretch gap-6 lg:grid-cols-[1.35fr_0.65fr]">
           <div className="border-2 border-black bg-[#1f5eff] p-6 text-white shadow-[7px_7px_0_#111] sm:p-10 lg:p-14">
-            <p className="code-type text-xs font-semibold uppercase tracking-[0.24em] text-[#b8ff2c]">
-              Terminal 3 trusted disclosure agent
-            </p>
-            <h1 className="display-type mt-6 max-w-5xl text-[clamp(4rem,10vw,9.5rem)] font-extrabold leading-[0.78]">
+            <h1 className="display-type max-w-5xl text-[clamp(4rem,10vw,9.5rem)] font-extrabold leading-[0.78]">
               KYC,
               <br />
               without the
@@ -55,21 +53,42 @@ export default function Home() {
           </div>
 
           <div className="grid gap-6">
+            <Card className="bg-[#b8ff2c]">
+              <CardContent className="relative min-h-[25rem] overflow-hidden p-6">
+                <div className="absolute -right-16 -top-10 rotate-6 border-2 border-black bg-white p-4 shadow-[6px_6px_0_#111]">
+                  <Image
+                    src="/aadhar.png"
+                    width={250}
+                    height={161}
+                    alt="Illustration representing an Aadhaar-style identity document"
+                    priority
+                  />
+                </div>
+                <div className="absolute left-5 top-28 -rotate-6 border-2 border-black bg-white p-3 shadow-[6px_6px_0_#111]">
+                  <Image src="/pan.png" width={126} height={126} alt="Illustration representing a PAN-style card" />
+                </div>
+                <div className="absolute bottom-6 right-7 rotate-3 border-2 border-black bg-white p-3 shadow-[6px_6px_0_#111]">
+                  <Image src="/card.png" width={128} height={128} alt="Illustration representing an identity card" />
+                </div>
+                <div className="relative z-10 max-w-[17rem]">
+                  <p className="display-type text-5xl font-extrabold leading-none">
+                    FAMILIAR IDS.
+                    <br />
+                    CLAIMS ONLY.
+                  </p>
+                  <p className="mt-4 font-semibold leading-7">
+                    Aadhaar, PAN, and card-style documents are what people recognize. KYCPass
+                    turns the demo back to claim categories, not uploads or stored copies.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
             <Card className="orange-panel justify-between">
               <CardContent>
                 <KeyRound className="size-10" strokeWidth={2.4} />
                 <p className="display-type mt-10 text-5xl font-extrabold leading-none">ONE DID.</p>
                 <p className="mt-4 max-w-sm font-semibold">
                   A real `did:t3n` identity controls encrypted profile data and scoped agent grants.
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="pink-panel justify-between">
-              <CardContent>
-                <EyeOff className="size-10" strokeWidth={2.4} />
-                <p className="display-type mt-10 text-5xl font-extrabold leading-none">ZERO PROMPT PII.</p>
-                <p className="mt-4 max-w-sm font-semibold">
-                  The agent receives receipts, not the raw identity values used to satisfy them.
                 </p>
               </CardContent>
             </Card>
@@ -97,8 +116,7 @@ export default function Home() {
 
       <section className="mx-auto max-w-[1480px] px-4 py-16 sm:px-6 sm:py-24">
         <div className="mb-10 max-w-3xl">
-          <p className="code-type text-xs font-bold uppercase tracking-[0.2em]">The judged path</p>
-          <h2 className="display-type mt-3 text-5xl font-extrabold sm:text-7xl">Four visible steps. One private path.</h2>
+          <h2 className="display-type text-5xl font-extrabold sm:text-7xl">Four visible steps. One private path.</h2>
         </div>
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
           {proofSteps.map((step) => (

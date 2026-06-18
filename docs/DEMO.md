@@ -16,7 +16,9 @@ Target length: 2.5 to 3 minutes.
 7. Approve the MetaMask signature and execute `submit-kyc-proof`.
 8. Show the accepted receipt: request ID, verifier, KYC level, claim names, and
    timestamp. Emphasize that values are absent.
-9. Open Audit and show the Terminal 3 events and token usage.
+9. Open Audit and show token usage. If Terminal 3 returns no audit events for
+   the DID, state that exact result and use the receipt plus usage movement as
+   the live evidence.
 10. End on the architecture diagram and the phrase: "Prove the claim. Keep the
     document."
 
@@ -31,11 +33,13 @@ Target length: 2.5 to 3 minutes.
 - Confirm OTP delivery before recording.
 - Clear previous receipt and workflow state by reloading the session.
 - Keep the browser network panel closed to avoid accidental PII capture.
+- Run the deployed health probes from `docs/DEPLOYMENT.md` before recording.
 - Record architecture as a separate clean insert if necessary.
 - Do not edit around a failed platform call in a way that implies success.
 
 ## Real-flow test sheet
 
 Record the date, wallet address, user DID, agent DID, contract version, deployed
-origin, receipt ID, and audit event IDs. Do not record OTPs, profile fields,
-private keys, API keys, or verifier secrets.
+origin, receipt ID, token balance before/after, and audit event IDs if Terminal
+3 returns them. Do not record OTPs, profile fields, private keys, API keys, or
+verifier secrets.

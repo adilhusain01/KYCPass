@@ -13,6 +13,14 @@
 - Unit, Rust, browser smoke, lint, type, and build tooling
 - Deployment, architecture, security, submission, and demo documentation
 
+## Live validation status
+
+The deployed public flow has reached an accepted sanitized receipt after a
+MetaMask-approved grant. The verifier receipt includes only metadata and claim
+category names. Terminal 3 token usage loads on the audit screen; Terminal 3 may
+return zero audit events for the DID, and KYCPass renders that response without
+fabricating events.
+
 ## Actions requiring the owner
 
 1. Add the developer key and DID to `.env.local`.
@@ -22,6 +30,20 @@
 5. Complete the live MetaMask and OTP flow.
 6. Record the demo using `docs/DEMO.md`.
 7. Create the public repository after confirming no secrets are in Git history.
+
+## Post-deploy probes
+
+Run these against the deployed origin after each environment or dependency
+change:
+
+```bash
+curl -fsS https://your-public-origin.example/api/config
+curl -fsS https://your-public-origin.example/api/agent/overview
+curl -fsS https://your-public-origin.example/api/disclosures/execute
+```
+
+The disclosure `GET` route is a health probe only. The live disclosure remains
+the consent-driven `POST /api/disclosures/execute`.
 
 ## Versioning
 
