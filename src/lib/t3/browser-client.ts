@@ -3,8 +3,6 @@
 import {
   T3nClient,
   createEthAuthInput,
-  getNodeUrl,
-  getScriptVersion,
   loadWasmComponent,
   metamask_get_address,
   metamask_sign,
@@ -169,29 +167,19 @@ export async function readUserAudit() {
   return withUserSession("audit-read", (client) => client.getAuditEvents({ limit: 30 }));
 }
 
-export async function grantDisclosureAccess(input: DisclosureGrantInput) {
+export async function grantDisclosureAccess(
+  input: DisclosureGrantInput & { userContractVersion: string },
+) {
   recordSessionDiagnostic(
     "grant-version",
-    "started",
-    "Resolving Terminal 3 user-contract version for agent authorization.",
+    "success",
+    `Using server-resolved Terminal 3 user-contract version: ${input.userContractVersion}.`,
   );
-  let userContractVersion: string;
-  try {
-    userContractVersion = await getScriptVersion(getNodeUrl(), "tee:user/contracts");
-    recordSessionDiagnostic(
-      "grant-version",
-      "success",
-      `Terminal 3 user-contract version resolved: ${userContractVersion}.`,
-    );
-  } catch (error) {
-    recordSessionDiagnostic("grant-version", "error", classifySessionError(error));
-    throw browserSessionError(error);
-  }
 
   return withUserSession("grant-update", (client) =>
     client.executeAndDecode({
       script_name: "tee:user/contracts",
-      script_version: userContractVersion,
+      script_version: input.userContractVersion,
       function_name: "agent-auth-update",
       input: buildDisclosureGrant(input),
     }),

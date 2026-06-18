@@ -38,6 +38,12 @@ export async function resolveDisclosureContract() {
   };
 }
 
+export async function resolveUserContractVersion() {
+  const env = getServerEnv();
+  setEnvironment(env.T3N_ENVIRONMENT);
+  return getScriptVersion(getNodeUrl(), "tee:user/contracts");
+}
+
 async function createAgentSession(timeoutMs: number): Promise<AgentSession> {
   const env = getServerEnv();
   setEnvironment(env.T3N_ENVIRONMENT);

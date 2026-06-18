@@ -20,6 +20,7 @@ type PublicConfig = {
   tenantDid: string;
   contractTail: string;
   contractVersion: string;
+  userContractVersion: string;
   verifierOrigin: string;
   verifierTeeReachable: boolean;
 };
@@ -133,6 +134,7 @@ export default function ConsentPage() {
           tenantDid: config.tenantDid,
           contractTail: config.contractTail,
           contractVersion: config.contractVersion,
+          userContractVersion: config.userContractVersion,
           verifierHost: new URL(config.verifierOrigin).hostname,
         });
         setGrantSigned(true);
