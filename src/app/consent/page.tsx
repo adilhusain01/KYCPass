@@ -3,10 +3,11 @@
 import { ArrowLeft, Check, Loader2, LockKeyhole, Send, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/page-header";
+import { SessionDiagnostics } from "@/components/session-diagnostics";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { claimCatalog, receiptSchema } from "@/lib/domain";
@@ -58,8 +59,25 @@ async function fetchJsonWithTimeout(
   }
 }
 
+function errorMessage(error: unknown, stage: ExecutionStage) {
+  const message = error instanceof Error ? error.message : "Disclosure failed.";
+  if (/failed to fetch/i.test(message)) {
+    if (stage === "config") {
+      return "Failed to fetch public KYCPass configuration. Check the deployed app network connection and retry.";
+    }
+    if (stage === "grant") {
+      return "Failed to reach Terminal 3 while signing the scoped grant. Reconnect the Terminal 3 session, keep this tab open, and retry.";
+    }
+    if (stage === "execute") {
+      return "Failed to reach the KYCPass disclosure execution route. Retry after the latest deployment is ready.";
+    }
+  }
+  return message;
+}
+
 export default function ConsentPage() {
   const router = useRouter();
+  const executingRef = useRef(false);
   const [executing, setExecuting] = useState(false);
   const [stage, setStage] = useState<ExecutionStage>("idle");
   const [grantSigned, setGrantSigned] = useState(false);
@@ -83,17 +101,23 @@ export default function ConsentPage() {
   const plan = createDisclosurePlan(requirement);
 
   async function approveAndExecute() {
+    if (executingRef.current) return;
     if (!userDid) {
       toast.error("Connect and authenticate MetaMask before approving.");
       return;
     }
+    executingRef.current = true;
     setExecuting(true);
     setStage("config");
+    let currentStage: ExecutionStage = "config";
     try {
       console.info("[KYCPass:Disclosure] Loading public server configuration.");
       const configResponse = await fetch("/api/config", { cache: "no-store" });
-      const configBody = await configResponse.json();
-      if (!configResponse.ok) throw new Error(configBody.error ?? "Server configuration unavailable.");
+      const configBody = await readResponseBody(configResponse);
+      const parsedConfigBody = configBody as { error?: string };
+      if (!configResponse.ok) {
+        throw new Error(parsedConfigBody.error ?? "Server configuration unavailable.");
+      }
       const config = configBody as PublicConfig;
       if (!config.verifierTeeReachable) {
         throw new Error(
@@ -101,6 +125,7 @@ export default function ConsentPage() {
         );
       }
       if (!grantSigned) {
+        currentStage = "grant";
         setStage("grant");
         console.info("[KYCPass:Disclosure] Requesting scoped Terminal 3 grant signature.");
         await grantDisclosureAccess({
@@ -117,6 +142,7 @@ export default function ConsentPage() {
       }
 
       const requestId = crypto.randomUUID();
+      currentStage = "execute";
       setStage("execute");
       console.info(`[KYCPass:Disclosure] Calling server execution route request=${requestId}.`);
       toast.info("Executing protected disclosure inside Terminal 3.");
@@ -140,8 +166,9 @@ export default function ConsentPage() {
       toast.success("Verifier accepted the protected disclosure.");
       router.push("/receipt");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Disclosure failed.");
+      toast.error(errorMessage(error, currentStage));
     } finally {
+      executingRef.current = false;
       setExecuting(false);
       setStage("idle");
     }
@@ -222,6 +249,7 @@ export default function ConsentPage() {
           </CardContent>
         </Card>
       </div>
+      <SessionDiagnostics />
     </div>
   );
 }

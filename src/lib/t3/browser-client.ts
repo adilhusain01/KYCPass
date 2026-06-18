@@ -170,7 +170,23 @@ export async function readUserAudit() {
 }
 
 export async function grantDisclosureAccess(input: DisclosureGrantInput) {
-  const userContractVersion = await getScriptVersion(getNodeUrl(), "tee:user/contracts");
+  recordSessionDiagnostic(
+    "grant-version",
+    "started",
+    "Resolving Terminal 3 user-contract version for agent authorization.",
+  );
+  let userContractVersion: string;
+  try {
+    userContractVersion = await getScriptVersion(getNodeUrl(), "tee:user/contracts");
+    recordSessionDiagnostic(
+      "grant-version",
+      "success",
+      `Terminal 3 user-contract version resolved: ${userContractVersion}.`,
+    );
+  } catch (error) {
+    recordSessionDiagnostic("grant-version", "error", classifySessionError(error));
+    throw browserSessionError(error);
+  }
 
   return withUserSession("grant-update", (client) =>
     client.executeAndDecode({
