@@ -21,6 +21,12 @@ let agentSessionPromise: Promise<AgentSession> | null = null;
 const DEFAULT_AGENT_TIMEOUT_MS = 15_000;
 const DISCLOSURE_AGENT_TIMEOUT_MS = 105_000;
 
+function logAgentStage(stage: string, startedAt: number, details: Record<string, unknown> = {}) {
+  console.info(
+    `[KYCPass:T3 agent] ${stage} elapsed_ms=${Date.now() - startedAt} details=${JSON.stringify(details)}`,
+  );
+}
+
 function getServerNodeUrl(env = getServerEnv()) {
   return `${env.NEXT_PUBLIC_VERIFIER_ORIGIN.replace(/\/$/, "")}/api/t3`;
 }
@@ -30,10 +36,16 @@ function getDisclosureScriptName(env = getServerEnv()) {
 }
 
 export async function resolveDisclosureContract() {
+  const startedAt = Date.now();
   const env = getServerEnv();
   setEnvironment(env.T3N_ENVIRONMENT);
   const scriptName = getDisclosureScriptName(env);
+  logAgentStage("disclosure contract version resolving", startedAt, { scriptName });
   const scriptVersion = await getScriptVersion(getServerNodeUrl(env), scriptName);
+  logAgentStage("disclosure contract version resolved", startedAt, {
+    scriptName,
+    scriptVersion,
+  });
   return {
     scriptName,
     scriptVersion,
@@ -42,35 +54,48 @@ export async function resolveDisclosureContract() {
 }
 
 export async function resolveUserContractVersion() {
+  const startedAt = Date.now();
   const env = getServerEnv();
   setEnvironment(env.T3N_ENVIRONMENT);
-  return getScriptVersion(getServerNodeUrl(env), "tee:user/contracts");
+  logAgentStage("user contract version resolving", startedAt);
+  const scriptVersion = await getScriptVersion(getServerNodeUrl(env), "tee:user/contracts");
+  logAgentStage("user contract version resolved", startedAt, { scriptVersion });
+  return scriptVersion;
 }
 
 async function createAgentSession(timeoutMs: number): Promise<AgentSession> {
+  const startedAt = Date.now();
   const env = getServerEnv();
   setEnvironment(env.T3N_ENVIRONMENT);
   const nodeUrl = getServerNodeUrl(env);
-  console.info(`[KYCPass:T3 agent] session init via ${nodeUrl}.`);
+  logAgentStage("session init", startedAt, {
+    nodeUrl,
+    environment: env.T3N_ENVIRONMENT,
+    timeoutMs,
+  });
   const address = eth_get_address(env.T3N_API_KEY);
-  console.info("[KYCPass:T3 agent] loading wasm component.");
+  const wasmStartedAt = Date.now();
+  logAgentStage("wasm loading", startedAt);
+  const wasmComponent = await loadWasmComponent();
+  logAgentStage("wasm loaded", startedAt, { wasmElapsedMs: Date.now() - wasmStartedAt });
   const client = new T3nClient({
     baseUrl: nodeUrl,
-    wasmComponent: await loadWasmComponent(),
+    wasmComponent,
     timeout: timeoutMs,
     handlers: {
       EthSign: metamask_sign(address, undefined, env.T3N_API_KEY),
     },
   });
-  console.info("[KYCPass:T3 agent] handshake started.");
+  logAgentStage("handshake started", startedAt);
   await client.handshake();
-  console.info("[KYCPass:T3 agent] handshake completed.");
-  console.info("[KYCPass:T3 agent] authenticate started.");
+  logAgentStage("handshake completed", startedAt);
+  logAgentStage("authenticate started", startedAt);
   const did = await client.authenticate(createEthAuthInput(address));
-  console.info("[KYCPass:T3 agent] authenticate completed.");
+  logAgentStage("authenticate completed", startedAt, { did: did.value });
   if (did.value.toLowerCase() !== env.T3N_DEVELOPER_DID.toLowerCase()) {
     throw new Error("Authenticated Terminal 3 DID does not match T3N_DEVELOPER_DID.");
   }
+  logAgentStage("session ready", startedAt, { did: did.value });
   return { client, did: did.value };
 }
 
@@ -89,6 +114,15 @@ async function getDisclosureAgentSession(): Promise<AgentSession> {
   return createAgentSession(DISCLOSURE_AGENT_TIMEOUT_MS);
 }
 
+export async function getDisclosureAgentHealth() {
+  const startedAt = Date.now();
+  const { did } = await getDisclosureAgentSession();
+  return {
+    did,
+    elapsedMs: Date.now() - startedAt,
+  };
+}
+
 export async function invokeDisclosureContract(input: {
   userDid: string;
   requestId: string;
@@ -96,16 +130,26 @@ export async function invokeDisclosureContract(input: {
   purpose: string;
   claims: string[];
 }) {
+  const startedAt = Date.now();
   const env = getServerEnv();
-  console.info(`[KYCPass:Disclosure] agent session requested request=${input.requestId}.`);
+  console.info(
+    `[KYCPass:Disclosure] agent session requested request=${input.requestId} details=${JSON.stringify({
+      claims: input.claims,
+      verifierName: input.verifierName,
+      verifierOrigin: env.NEXT_PUBLIC_VERIFIER_ORIGIN,
+    })}`,
+  );
   const { client } = await getDisclosureAgentSession();
+  console.info(
+    `[KYCPass:Disclosure] agent session ready request=${input.requestId} elapsed_ms=${Date.now() - startedAt}.`,
+  );
   console.info(`[KYCPass:Disclosure] contract version resolving request=${input.requestId}.`);
   const { scriptName, scriptVersion } = await resolveDisclosureContract();
   console.info(
-    `[KYCPass:Disclosure] contract execution dispatch request=${input.requestId} script=${scriptName}@${scriptVersion}.`,
+    `[KYCPass:Disclosure] contract execution dispatch request=${input.requestId} elapsed_ms=${Date.now() - startedAt} script=${scriptName}@${scriptVersion}.`,
   );
 
-  return client.executeAndDecode({
+  const result = await client.executeAndDecode({
     script_name: scriptName,
     script_version: scriptVersion,
     function_name: "submit-kyc-proof",
@@ -119,6 +163,10 @@ export async function invokeDisclosureContract(input: {
       claims: input.claims,
     },
   });
+  console.info(
+    `[KYCPass:Disclosure] contract execution returned request=${input.requestId} elapsed_ms=${Date.now() - startedAt}.`,
+  );
+  return result;
 }
 
 export async function getAgentOverview() {
