@@ -1,0 +1,21 @@
+/// KYCPass Terminal 3 tenant contract.
+///
+/// The request body contains profile placeholders, not plaintext PII. Terminal
+/// 3 resolves those placeholders after the WASM boundary and sends the result
+/// directly to the verifier host permitted by the user's scoped grant.
+package z:kyc-disclosure@0.1.0;
+
+world kyc-disclosure {
+    import host:interfaces/http-with-placeholders@2.1.0;
+    export contracts;
+}
+
+interface contracts {
+    record generic-input {
+        input: option<list<u8>>,
+        user-profile: option<list<u8>>,
+        context: option<list<u8>>,
+    }
+
+    submit-kyc-proof: func(req: generic-input) -> result<list<u8>, string>;
+}
