@@ -20,7 +20,7 @@ type AgentSession = {
 
 let agentSessionPromise: Promise<AgentSession> | null = null;
 const DEFAULT_AGENT_TIMEOUT_MS = 15_000;
-const DISCLOSURE_AGENT_TIMEOUT_MS = 8_000;
+const DISCLOSURE_AGENT_TIMEOUT_MS = 105_000;
 
 function getDisclosureScriptName(env = getServerEnv()) {
   return `z:${env.T3N_DEVELOPER_DID.slice("did:t3n:".length)}:${env.T3N_CONTRACT_TAIL}`;

@@ -132,7 +132,7 @@ export default function ConsentPage() {
             approvedClaims: plan.claims,
           }),
         },
-        35_000,
+        115_000,
       );
       const parsedBody = body as { error?: string };
       if (!response.ok) throw new Error(parsedBody.error ?? "TEE disclosure failed.");

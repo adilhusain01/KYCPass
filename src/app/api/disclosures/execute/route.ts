@@ -7,7 +7,7 @@ import { invokeDisclosureContract } from "@/lib/t3/server-client";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-export const maxDuration = 30;
+export const maxDuration = 120;
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -38,7 +38,7 @@ async function retryDelegatedExecution<T>(
   operation: () => Promise<T>,
   requestId: string,
 ): Promise<T> {
-  const delays = [0, 1_000];
+  const delays = [0];
   let lastError: unknown;
 
   for (let attempt = 0; attempt < delays.length; attempt += 1) {
@@ -87,7 +87,7 @@ export async function POST(request: Request) {
           }),
         requestId,
       ),
-      22_000,
+      115_000,
       "Terminal 3 disclosure execution exceeded the hosted function window before returning a receipt. The scoped grant is signed; retry execution or run the disclosure route on a longer-lived Node host.",
     );
     console.info(
