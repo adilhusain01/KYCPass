@@ -23,9 +23,33 @@ type PublicConfig = {
   verifierTeeReachable: boolean;
 };
 
+type ExecutionStage = "idle" | "config" | "grant" | "execute";
+
+async function fetchJsonWithTimeout(
+  input: RequestInfo | URL,
+  init: RequestInit,
+  timeoutMs: number,
+) {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(input, { ...init, signal: controller.signal });
+    const body = await response.json();
+    return { response, body };
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error("Disclosure execution timed out before the server returned a receipt.");
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timer);
+  }
+}
+
 export default function ConsentPage() {
   const router = useRouter();
   const [executing, setExecuting] = useState(false);
+  const [stage, setStage] = useState<ExecutionStage>("idle");
   const requirement = useWorkflowStore((state) => state.requirement);
   const userDid = useWorkflowStore((state) => state.userDid);
   const setReceipt = useWorkflowStore((state) => state.setReceipt);
@@ -51,7 +75,9 @@ export default function ConsentPage() {
       return;
     }
     setExecuting(true);
+    setStage("config");
     try {
+      console.info("[KYCPass:Disclosure] Loading public server configuration.");
       const configResponse = await fetch("/api/config", { cache: "no-store" });
       const configBody = await configResponse.json();
       if (!configResponse.ok) throw new Error(configBody.error ?? "Server configuration unavailable.");
@@ -61,6 +87,8 @@ export default function ConsentPage() {
           "TEE disclosure requires a public HTTPS verifier origin. Deploy KYCPass or configure a secure public tunnel before approving this grant.",
         );
       }
+      setStage("grant");
+      console.info("[KYCPass:Disclosure] Requesting scoped Terminal 3 grant signature.");
       await grantDisclosureAccess({
         agentDid: config.agentDid,
         tenantDid: config.tenantDid,
@@ -70,17 +98,24 @@ export default function ConsentPage() {
       });
       toast.success("Scoped Terminal 3 grant signed.");
 
-      const response = await fetch("/api/disclosures/execute", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          requestId: crypto.randomUUID(),
-          userDid,
-          requirement,
-          approvedClaims: plan.claims,
-        }),
-      });
-      const body = await response.json();
+      const requestId = crypto.randomUUID();
+      setStage("execute");
+      console.info(`[KYCPass:Disclosure] Calling server execution route request=${requestId}.`);
+      toast.info("Executing protected disclosure inside Terminal 3.");
+      const { response, body } = await fetchJsonWithTimeout(
+        "/api/disclosures/execute",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            requestId,
+            userDid,
+            requirement,
+            approvedClaims: plan.claims,
+          }),
+        },
+        70_000,
+      );
       if (!response.ok) throw new Error(body.error ?? "TEE disclosure failed.");
       setReceipt(receiptSchema.parse(body));
       toast.success("Verifier accepted the protected disclosure.");
@@ -89,6 +124,7 @@ export default function ConsentPage() {
       toast.error(error instanceof Error ? error.message : "Disclosure failed.");
     } finally {
       setExecuting(false);
+      setStage("idle");
     }
   }
 
@@ -149,7 +185,13 @@ export default function ConsentPage() {
               disabled={executing}
             >
               {executing ? <Loader2 className="animate-spin" /> : <Send />}
-              {executing ? "Executing inside T3N" : "Approve and disclose"}
+              {executing
+                ? stage === "grant"
+                  ? "Waiting for grant signature"
+                  : stage === "execute"
+                    ? "Executing inside T3N"
+                    : "Preparing disclosure"
+                : "Approve and disclose"}
             </Button>
             <Button asChild variant="neutral" className="w-full bg-white text-black">
               <Link href="/verifier">

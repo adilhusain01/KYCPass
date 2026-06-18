@@ -4,8 +4,6 @@ import {
   T3nClient,
   createEthAuthInput,
   eth_get_address,
-  getNodeUrl,
-  getScriptVersion,
   loadWasmComponent,
   metamask_sign,
   setEnvironment,
@@ -57,11 +55,10 @@ export async function invokeDisclosureContract(input: {
   const env = getServerEnv();
   const { client } = await getAgentSession();
   const scriptName = `z:${env.T3N_DEVELOPER_DID.slice("did:t3n:".length)}:${env.T3N_CONTRACT_TAIL}`;
-  const scriptVersion = await getScriptVersion(getNodeUrl(), scriptName);
 
   return client.executeAndDecode({
     script_name: scriptName,
-    script_version: scriptVersion,
+    script_version: env.T3N_CONTRACT_VERSION,
     function_name: "submit-kyc-proof",
     pii_did: input.userDid,
     input: {
