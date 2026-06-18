@@ -4,6 +4,8 @@ import {
   T3nClient,
   createEthAuthInput,
   eth_get_address,
+  getNodeUrl,
+  getScriptVersion,
   loadWasmComponent,
   metamask_sign,
   setEnvironment,
@@ -17,6 +19,22 @@ type AgentSession = {
 };
 
 let agentSessionPromise: Promise<AgentSession> | null = null;
+
+function getDisclosureScriptName(env = getServerEnv()) {
+  return `z:${env.T3N_DEVELOPER_DID.slice("did:t3n:".length)}:${env.T3N_CONTRACT_TAIL}`;
+}
+
+export async function resolveDisclosureContract() {
+  const env = getServerEnv();
+  setEnvironment(env.T3N_ENVIRONMENT);
+  const scriptName = getDisclosureScriptName(env);
+  const scriptVersion = await getScriptVersion(getNodeUrl(), scriptName);
+  return {
+    scriptName,
+    scriptVersion,
+    contractTail: env.T3N_CONTRACT_TAIL,
+  };
+}
 
 export async function getAgentSession(): Promise<AgentSession> {
   if (agentSessionPromise) return agentSessionPromise;
@@ -54,11 +72,11 @@ export async function invokeDisclosureContract(input: {
 }) {
   const env = getServerEnv();
   const { client } = await getAgentSession();
-  const scriptName = `z:${env.T3N_DEVELOPER_DID.slice("did:t3n:".length)}:${env.T3N_CONTRACT_TAIL}`;
+  const { scriptName, scriptVersion } = await resolveDisclosureContract();
 
   return client.executeAndDecode({
     script_name: scriptName,
-    script_version: env.T3N_CONTRACT_VERSION,
+    script_version: scriptVersion,
     function_name: "submit-kyc-proof",
     pii_did: input.userDid,
     input: {
@@ -75,15 +93,16 @@ export async function invokeDisclosureContract(input: {
 export async function getAgentOverview() {
   const env = getServerEnv();
   const { client, did } = await getAgentSession();
-  const [usage, audit] = await Promise.all([
+  const [usage, audit, contract] = await Promise.all([
     client.getUsage({ limit: 20 }),
     client.getAuditEvents({ limit: 30 }),
+    resolveDisclosureContract(),
   ]);
   return {
     did,
     tenantDid: env.T3N_DEVELOPER_DID,
     contractTail: env.T3N_CONTRACT_TAIL,
-    contractVersion: env.T3N_CONTRACT_VERSION,
+    contractVersion: contract.scriptVersion,
     verifierOrigin: env.NEXT_PUBLIC_VERIFIER_ORIGIN,
     usage,
     audit,

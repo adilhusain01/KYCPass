@@ -25,6 +25,40 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string)
   });
 }
 
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isDelegationNotReadyError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  return /not permitted to act on behalf|HTTP 403: Forbidden/i.test(message);
+}
+
+async function retryDelegatedExecution<T>(
+  operation: () => Promise<T>,
+  requestId: string,
+): Promise<T> {
+  const delays = [0, 1_500, 3_000, 5_000];
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < delays.length; attempt += 1) {
+    if (delays[attempt] > 0) await sleep(delays[attempt]);
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error;
+      if (!isDelegationNotReadyError(error) || attempt === delays.length - 1) break;
+      console.warn(
+        `[KYCPass:Disclosure] delegation not ready request=${requestId} attempt=${attempt + 1}; retrying.`,
+      );
+    }
+  }
+
+  throw lastError instanceof Error
+    ? lastError
+    : new Error("Terminal 3 delegated execution failed.");
+}
+
 export async function POST(request: Request) {
   const startedAt = Date.now();
   let requestId = "unparsed";
@@ -42,13 +76,17 @@ export async function POST(request: Request) {
     const approvedClaims = assertMinimumDisclosure(body.requirement, body.approvedClaims);
     console.info(`[KYCPass:Disclosure] invoke started request=${requestId}.`);
     const result = await withTimeout(
-      invokeDisclosureContract({
-        userDid: body.userDid,
-        requestId: body.requestId,
-        verifierName: body.requirement.verifierName,
-        purpose: body.requirement.purpose,
-        claims: approvedClaims,
-      }),
+      retryDelegatedExecution(
+        () =>
+          invokeDisclosureContract({
+            userDid: body.userDid,
+            requestId: body.requestId,
+            verifierName: body.requirement.verifierName,
+            purpose: body.requirement.purpose,
+            claims: approvedClaims,
+          }),
+        requestId,
+      ),
       22_000,
       "Terminal 3 disclosure execution exceeded the hosted function window before returning a receipt. The scoped grant is signed; retry execution or run the disclosure route on a longer-lived Node host.",
     );

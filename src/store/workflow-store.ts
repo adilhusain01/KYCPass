@@ -13,6 +13,8 @@ type DidProgress = {
 type PersistedWorkflow = {
   address: string | null;
   userDid: string | null;
+  emailVerified?: boolean;
+  levelOneIssued?: boolean;
   requirement: KycRequirement | null;
   receipt: DisclosureReceipt | null;
   progressByDid: Record<string, DidProgress>;
@@ -117,11 +119,31 @@ export const useWorkflowStore = create<WorkflowState>()(
       partialize: (state): PersistedWorkflow => ({
         address: state.address,
         userDid: state.userDid,
+        emailVerified: state.emailVerified,
+        levelOneIssued: state.levelOneIssued,
         requirement: state.requirement,
         receipt: state.receipt,
         progressByDid: state.progressByDid,
         receiptsByDid: state.receiptsByDid,
       }),
+      merge: (persisted, current) => {
+        const saved = persisted as Partial<PersistedWorkflow>;
+        const merged = {
+          ...current,
+          ...saved,
+          progressByDid: saved.progressByDid ?? current.progressByDid,
+          receiptsByDid: saved.receiptsByDid ?? current.receiptsByDid,
+        };
+        const didProgress = merged.userDid ? merged.progressByDid[merged.userDid] : undefined;
+        return {
+          ...merged,
+          emailVerified: didProgress?.emailVerified ?? Boolean(saved.emailVerified),
+          levelOneIssued: didProgress?.levelOneIssued ?? Boolean(saved.levelOneIssued),
+          receipt: merged.userDid
+            ? (merged.receiptsByDid[merged.userDid] ?? merged.receipt)
+            : merged.receipt,
+        };
+      },
     },
   ),
 );
