@@ -8,8 +8,9 @@ Terminal 3 TEE and sends them directly to the verifier. KYCPass receives a
 sanitized receipt, not the claim values.
 
 KYCPass also exposes reusable partner infrastructure. A platform can call
-`POST /api/partners/kyc-request` with its own name, purpose, and required claim
-set, embed the KYCPass adapter on its profile page, and receive a sanitized
+`POST /api/partners/kyc-request` with its own name, purpose, required claim set,
+and verifier callback URL. It can embed the KYCPass adapter on its profile page,
+receive approved values at its own verifier endpoint, and return a sanitized
 receipt after the user approves Terminal 3 disclosure. The sample relying-party
 page at `/northstar` demonstrates that model without requiring the bank to
 integrate DigiLocker, UIDAI, or Terminal 3 directly. The internal `/verifier`
@@ -116,6 +117,7 @@ user-signed grant.
 - [Security and privacy](docs/SECURITY.md)
 - [Official document sources](docs/DOCUMENT-SOURCES.md)
 - [Partner integration API](docs/PARTNER-INTEGRATION.md)
+- [Separate Northstar deployment](docs/NORTHSTAR-SEPARATE-APP.md)
 - [Deployment and operations](docs/DEPLOYMENT.md)
 - [Testing guide](docs/TESTING.md)
 - [Hackathon submission copy](docs/SUBMISSION.md)

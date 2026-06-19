@@ -65,8 +65,20 @@ export function disclosureErrorMessage(error: unknown, stage: ExecutionStage) {
   return message;
 }
 
-export async function loadDisclosureConfig(): Promise<PublicDisclosureConfig> {
-  const configResponse = await fetch("/api/config", { cache: "no-store" });
+function isTeeReachableOrigin(origin: string) {
+  const url = new URL(origin);
+  return (
+    url.protocol === "https:" &&
+    !["localhost", "127.0.0.1", "::1"].includes(url.hostname.toLowerCase())
+  );
+}
+
+function apiUrl(apiOrigin: string | undefined, path: string) {
+  return `${apiOrigin?.replace(/\/$/, "") ?? ""}${path}`;
+}
+
+export async function loadDisclosureConfig(apiOrigin?: string): Promise<PublicDisclosureConfig> {
+  const configResponse = await fetch(apiUrl(apiOrigin, "/api/config"), { cache: "no-store" });
   const configBody = await readResponseBody(configResponse);
   const parsedConfigBody = configBody as { error?: string };
   if (!configResponse.ok) {
@@ -80,18 +92,22 @@ export async function executeDisclosure({
   requirement,
   onStage,
   grantAlreadySigned,
+  apiOrigin,
+  t3RelayOrigin,
 }: {
   userDid: string;
   requirement: KycRequirement;
   onStage?: (stage: Exclude<ExecutionStage, "idle">) => void;
   grantAlreadySigned?: boolean;
+  apiOrigin?: string;
+  t3RelayOrigin?: string;
 }): Promise<{ receipt: DisclosureReceipt; approvedClaims: ClaimId[]; grantSigned: boolean }> {
   onStage?.("config");
   console.info("[KYCPass:Disclosure] Loading public server configuration.");
-  const config = await loadDisclosureConfig();
-  if (!config.verifierTeeReachable) {
+  const config = await loadDisclosureConfig(apiOrigin);
+  if (!isTeeReachableOrigin(requirement.verifierOrigin)) {
     throw new Error(
-      "TEE disclosure requires a public HTTPS verifier origin. Deploy KYCPass or configure a secure public tunnel before approving this grant.",
+      "TEE disclosure requires a public HTTPS verifier origin. Deploy the partner verifier or configure a secure public tunnel before approving this grant.",
     );
   }
 
@@ -104,7 +120,8 @@ export async function executeDisclosure({
       contractTail: config.contractTail,
       contractVersion: config.contractVersion,
       userContractVersion: config.userContractVersion,
-      verifierHost: new URL(config.verifierOrigin).hostname,
+      verifierHost: new URL(requirement.verifierOrigin).hostname,
+      t3RelayOrigin,
     });
   } else {
     console.info("[KYCPass:Disclosure] Reusing scoped Terminal 3 grant from this page session.");
@@ -115,7 +132,7 @@ export async function executeDisclosure({
   onStage?.("execute");
   console.info(`[KYCPass:Disclosure] Calling server execution route request=${requestId}.`);
   const { response, body } = await fetchJsonWithTimeout(
-    "/api/disclosures/execute",
+    apiUrl(apiOrigin, "/api/disclosures/execute"),
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },

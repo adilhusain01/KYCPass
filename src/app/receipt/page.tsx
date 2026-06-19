@@ -19,7 +19,7 @@ export default function ReceiptPage() {
         <FileCheck2 className="mx-auto size-14" />
         <h1 className="display-type mt-5 text-5xl font-bold">No receipt yet.</h1>
         <Button asChild className="mt-7">
-          <Link href="/northstar">Open bank demo</Link>
+          <Link href="/northstar">Open platform demo</Link>
         </Button>
       </div>
     );
@@ -70,7 +70,7 @@ export default function ReceiptPage() {
         {requirement?.returnPath ? (
           <Button asChild>
             <Link href={requirement.returnPath}>
-              Return to Northstar Bank <ArrowRight />
+              Return to platform demo <ArrowRight />
             </Link>
           </Button>
         ) : null}

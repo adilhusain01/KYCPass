@@ -3,6 +3,7 @@
 import {
   Activity,
   BadgeCheck,
+  BookOpenText,
   FileKey2,
   Fingerprint,
   Landmark,
@@ -22,7 +23,8 @@ import { useWorkflowStore } from "@/store/workflow-store";
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/onboarding", label: "Onboarding", icon: Fingerprint },
-  { href: "/northstar", label: "Bank demo", icon: Landmark },
+  { href: "/northstar", label: "Platform demo", icon: Landmark },
+  { href: "/docs", label: "Docs", icon: BookOpenText },
   { href: "/credentials", label: "Credentials", icon: BadgeCheck },
   { href: "/audit", label: "Audit", icon: Activity },
   { href: "/settings", label: "Settings", icon: Settings },
@@ -39,19 +41,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-dvh">
-      <div className="overflow-hidden border-b-2 border-black bg-black py-2 text-white">
-        <div className="marquee flex w-max gap-8 whitespace-nowrap font-mono text-xs uppercase tracking-[0.18em]">
-          <span>Private data stays outside agent context</span>
-          <span>Terminal 3 testnet</span>
-          <span>Scoped disclosure</span>
-          <span>Hardware-enforced execution</span>
-          <span>Private data stays outside agent context</span>
-          <span>Terminal 3 testnet</span>
-          <span>Scoped disclosure</span>
-          <span>Hardware-enforced execution</span>
-        </div>
-      </div>
-
       <header className="sticky top-0 z-40 border-b-2 border-black bg-[#fff8e7]/95 backdrop-blur">
         <div className="mx-auto flex max-w-[1480px] items-center justify-between px-4 py-3 sm:px-6">
           <Link

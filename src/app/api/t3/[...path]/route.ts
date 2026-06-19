@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { corsHeaders, withCors } from "@/lib/cors";
 import {
   extractAffinityCookie,
   getAllowedT3Path,
@@ -25,7 +26,7 @@ function copyRequestHeaders(request: Request) {
   return headers;
 }
 
-function copyResponseHeaders(upstream: Response) {
+function copyResponseHeaders(upstream: Response, request: Request) {
   const headers = new Headers({
     "Cache-Control": "no-store",
     "X-Content-Type-Options": "nosniff",
@@ -34,7 +35,10 @@ function copyResponseHeaders(upstream: Response) {
     const value = upstream.headers.get(name);
     if (value) headers.set(name, value);
   }
-  const affinityCookie = rewriteAffinityCookie(upstream.headers.get("set-cookie"));
+  const affinityCookie = rewriteAffinityCookie(
+    upstream.headers.get("set-cookie"),
+    new URL(request.url).protocol === "https:",
+  );
   if (affinityCookie) headers.set("set-cookie", affinityCookie);
   return headers;
 }
@@ -62,7 +66,7 @@ async function relay(request: Request, context: RouteContext) {
     return new Response(upstream.body, {
       status: upstream.status,
       statusText: upstream.statusText,
-      headers: copyResponseHeaders(upstream),
+      headers: withCors(request, copyResponseHeaders(upstream, request)),
     });
   } catch (error) {
     const forbidden = error instanceof Error && error.message.includes("not allowed");
@@ -77,10 +81,14 @@ async function relay(request: Request, context: RouteContext) {
       },
       {
         status: forbidden ? 404 : 502,
-        headers: { "Cache-Control": "no-store" },
+        headers: withCors(request, { "Cache-Control": "no-store" }),
       },
     );
   }
+}
+
+export async function OPTIONS(request: Request) {
+  return new Response(null, { status: 204, headers: corsHeaders(request) });
 }
 
 export async function GET(request: Request, context: RouteContext) {

@@ -33,10 +33,16 @@ describe("Terminal 3 same-origin proxy", () => {
     expect(extractAffinityCookie("other=secret")).toBeNull();
   });
 
-  it("rewrites the affinity cookie for the same-origin relay", () => {
+  it("uses a localhost-compatible affinity cookie for HTTP development", () => {
     expect(rewriteAffinityCookie('GCLB="affinity-value"; Path=/; HttpOnly')).toBe(
       'GCLB="affinity-value"; Path=/api/t3; HttpOnly; SameSite=Lax',
     );
     expect(rewriteAffinityCookie("other=value; Path=/")).toBeNull();
+  });
+
+  it("allows the affinity cookie on an HTTPS cross-site adapter", () => {
+    expect(rewriteAffinityCookie('GCLB="affinity-value"; Path=/; HttpOnly', true)).toBe(
+      'GCLB="affinity-value"; Path=/api/t3; HttpOnly; SameSite=None; Secure',
+    );
   });
 });

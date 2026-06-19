@@ -27,12 +27,15 @@ export function extractAffinityCookie(cookieHeader: string | null) {
   return cookie ?? null;
 }
 
-export function rewriteAffinityCookie(setCookie: string | null) {
+export function rewriteAffinityCookie(setCookie: string | null, secure = false) {
   if (!setCookie) return null;
   const affinityCookie = setCookie
     .split(/,(?=\s*[^;,=\s]+=[^;,]+)/)
     .map((cookie) => cookie.trim())
     .find((cookie) => cookie.startsWith("GCLB="));
   const pair = affinityCookie?.split(";", 1)[0];
-  return pair ? `${pair}; Path=/api/t3; HttpOnly; SameSite=Lax` : null;
+  if (!pair) return null;
+
+  const crossSiteAttributes = secure ? "; SameSite=None; Secure" : "; SameSite=Lax";
+  return `${pair}; Path=/api/t3; HttpOnly${crossSiteAttributes}`;
 }

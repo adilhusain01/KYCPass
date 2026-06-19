@@ -127,6 +127,8 @@ export async function invokeDisclosureContract(input: {
   userDid: string;
   requestId: string;
   verifierName: string;
+  verifierOrigin: string;
+  verifierUrl?: string;
   purpose: string;
   claims: string[];
 }) {
@@ -136,7 +138,8 @@ export async function invokeDisclosureContract(input: {
     `[KYCPass:Disclosure] agent session requested request=${input.requestId} details=${JSON.stringify({
       claims: input.claims,
       verifierName: input.verifierName,
-      verifierOrigin: env.NEXT_PUBLIC_VERIFIER_ORIGIN,
+      verifierOrigin: input.verifierOrigin,
+      verifierUrl: input.verifierUrl ?? `${input.verifierOrigin}/api/verifier/submit`,
     })}`,
   );
   const { client } = await getDisclosureAgentSession();
@@ -158,7 +161,7 @@ export async function invokeDisclosureContract(input: {
       request_id: input.requestId,
       verifier_id: input.verifierName,
       purpose: input.purpose,
-      verifier_url: `${env.NEXT_PUBLIC_VERIFIER_ORIGIN}/api/verifier/submit`,
+      verifier_url: input.verifierUrl ?? `${input.verifierOrigin}/api/verifier/submit`,
       verifier_secret: env.KYCPASS_VERIFIER_SECRET,
       claims: input.claims,
     },

@@ -13,6 +13,7 @@ export const partnerVerificationRequestSchema = z.object({
     id: z.string().regex(/^[a-z0-9][a-z0-9-]{2,60}$/),
     name: z.string().min(2).max(100),
     origin: z.string().url().optional(),
+    verifierUrl: z.string().url().optional(),
   }),
   purpose: z.string().min(10).max(300),
   requestedClaims: z.array(claimIdSchema).min(1).max(6),
@@ -25,10 +26,14 @@ export function buildPartnerRequirement(
   request: PartnerVerificationRequest,
   verifierOrigin: string,
 ): KycRequirement {
+  const verifierUrl = request.partner.verifierUrl;
+  const resolvedVerifierOrigin = verifierUrl ? new URL(verifierUrl).origin : verifierOrigin;
+
   return requirementSchema.parse({
     id: `${request.partner.id}-${crypto.randomUUID()}`,
     verifierName: request.partner.name,
-    verifierOrigin,
+    verifierOrigin: resolvedVerifierOrigin,
+    ...(verifierUrl ? { verifierUrl } : {}),
     purpose: request.purpose,
     requestedClaims: [...new Set(request.requestedClaims)],
     expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),

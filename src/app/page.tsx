@@ -47,39 +47,56 @@ export default function Home() {
                 </Link>
               </Button>
               <Button asChild size="lg" variant="neutral" className="bg-white text-black">
-                <Link href="/northstar">See the bank integration</Link>
+                <Link href="/docs">Read integration docs</Link>
               </Button>
             </div>
           </div>
 
           <div className="grid gap-6">
             <Card className="bg-[#b8ff2c]">
-              <CardContent className="relative min-h-[25rem] overflow-hidden p-6">
-                <div className="absolute -right-16 -top-10 rotate-6 border-2 border-black bg-white p-4 shadow-[6px_6px_0_#111]">
-                  <Image
-                    src="/aadhar.png"
-                    width={250}
-                    height={161}
-                    alt="Illustration representing an Aadhaar-style identity document"
-                    priority
-                  />
-                </div>
-                <div className="absolute left-5 top-28 -rotate-6 border-2 border-black bg-white p-3 shadow-[6px_6px_0_#111]">
-                  <Image src="/pan.png" width={126} height={126} alt="Illustration representing a PAN-style card" />
-                </div>
-                <div className="absolute bottom-6 right-7 rotate-3 border-2 border-black bg-white p-3 shadow-[6px_6px_0_#111]">
-                  <Image src="/card.png" width={128} height={128} alt="Illustration representing an identity card" />
-                </div>
-                <div className="relative z-10 max-w-[17rem]">
-                  <p className="display-type text-5xl font-extrabold leading-none">
+              <CardContent className="grid min-h-[25rem] gap-6 p-6 xl:grid-cols-[0.9fr_1.1fr]">
+                <div className="relative z-10">
+                  <p className="display-type text-4xl font-extrabold leading-none sm:text-5xl">
                     FAMILIAR IDS.
                     <br />
                     CLAIMS ONLY.
                   </p>
-                  <p className="mt-4 font-semibold leading-7">
+                  <p className="mt-4 max-w-sm font-semibold leading-7">
                     Aadhaar, PAN, and card-style documents are what people recognize. KYCPass
                     turns the demo back to claim categories, not uploads or stored copies.
                   </p>
+                </div>
+                <div className="grid content-center gap-4 sm:grid-cols-2 xl:grid-cols-1">
+                  <div className="rotate-2 border-2 border-black bg-white p-3 shadow-[6px_6px_0_#111]">
+                    <Image
+                      src="/aadhar.png"
+                      width={320}
+                      height={206}
+                      alt="Illustration representing an Aadhaar-style identity document"
+                      className="h-auto w-full"
+                      priority
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="-rotate-3 border-2 border-black bg-white p-3 shadow-[6px_6px_0_#111]">
+                      <Image
+                        src="/pan.png"
+                        width={150}
+                        height={150}
+                        alt="Illustration representing a PAN-style card"
+                        className="h-auto w-full"
+                      />
+                    </div>
+                    <div className="rotate-3 border-2 border-black bg-white p-3 shadow-[6px_6px_0_#111]">
+                      <Image
+                        src="/card.png"
+                        width={150}
+                        height={150}
+                        alt="Illustration representing an identity card"
+                        className="h-auto w-full"
+                      />
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>

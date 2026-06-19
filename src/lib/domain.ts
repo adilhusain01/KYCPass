@@ -58,6 +58,7 @@ export const requirementSchema = z.object({
   id: z.string().min(3).max(100),
   verifierName: z.string().min(2).max(100),
   verifierOrigin: z.string().url(),
+  verifierUrl: z.string().url().optional(),
   purpose: z.string().min(10).max(300),
   requestedClaims: z.array(claimIdSchema).min(1).max(claimIds.length),
   expiresAt: z.string().datetime(),

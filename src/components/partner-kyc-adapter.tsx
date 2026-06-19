@@ -19,8 +19,11 @@ import { connectUserSession } from "@/lib/t3/browser-client";
 import { useWorkflowStore } from "@/store/workflow-store";
 
 type PartnerKycAdapterProps = {
+  kycpassOrigin?: string;
+  t3RelayOrigin?: string;
   partnerId: string;
   partnerName: string;
+  verifierUrl?: string;
   purpose: string;
   requestedClaims: ClaimId[];
   returnPath?: "/northstar";
@@ -38,14 +41,20 @@ type PartnerKycRequestResponse = {
   };
 };
 
+function apiUrl(apiOrigin: string | undefined, path: string) {
+  return `${apiOrigin?.replace(/\/$/, "") ?? ""}${path}`;
+}
+
 async function createPartnerRequest({
+  kycpassOrigin,
   partnerId,
   partnerName,
+  verifierUrl,
   purpose,
   requestedClaims,
   returnPath,
 }: PartnerKycAdapterProps): Promise<PartnerKycRequestResponse> {
-  const response = await fetch("/api/partners/kyc-request", {
+  const response = await fetch(apiUrl(kycpassOrigin, "/api/partners/kyc-request"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -53,6 +62,7 @@ async function createPartnerRequest({
         id: partnerId,
         name: partnerName,
         origin: window.location.origin,
+        verifierUrl,
       },
       purpose,
       requestedClaims,
@@ -80,12 +90,13 @@ export function PartnerKycAdapter(props: PartnerKycAdapterProps) {
   const setRequirement = useWorkflowStore((state) => state.setRequirement);
   const setReceipt = useWorkflowStore((state) => state.setReceipt);
   const verified = hasReceiptForClaims(receipt, props.partnerName, props.requestedClaims);
+  const usesExternalKycpass = Boolean(props.kycpassOrigin);
 
   async function connectWallet() {
     setError(null);
     setStage("config");
     try {
-      const session = await connectUserSession();
+      const session = await connectUserSession(props.t3RelayOrigin ?? props.kycpassOrigin);
       setIdentity(session.address, session.did);
       toast.success("Wallet connected to KYCPass.");
     } catch (caught) {
@@ -103,7 +114,7 @@ export function PartnerKycAdapter(props: PartnerKycAdapterProps) {
       await connectWallet();
       return;
     }
-    if (!levelOneIssued) return;
+    if (!usesExternalKycpass && !levelOneIssued) return;
 
     executingRef.current = true;
     setError(null);
@@ -119,6 +130,8 @@ export function PartnerKycAdapter(props: PartnerKycAdapterProps) {
         userDid,
         requirement: response.requirement,
         grantAlreadySigned: grantSigned,
+        apiOrigin: props.kycpassOrigin,
+        t3RelayOrigin: props.t3RelayOrigin ?? props.kycpassOrigin,
         onStage: (nextStage) => {
           currentStage = nextStage;
           setStage(nextStage);
@@ -138,7 +151,7 @@ export function PartnerKycAdapter(props: PartnerKycAdapterProps) {
     }
   }
 
-  const executing = executingRef.current || stage !== "idle";
+  const executing = stage !== "idle";
 
   return (
     <div className="rounded-3xl border border-[#12231d]/15 bg-[#f4f1e8] p-5 sm:p-6">
@@ -182,6 +195,11 @@ export function PartnerKycAdapter(props: PartnerKycAdapterProps) {
           <p className="font-semibold text-[#12231d]">Platform login</p>
           <p className="mt-1 break-all">Wallet: {address ?? "connected through Terminal 3 DID"}</p>
           <p className="mt-1 break-all">DID: {userDid ?? "not authenticated"}</p>
+          {usesExternalKycpass && !levelOneIssued ? (
+            <p className="mt-2">
+              KYCPass profile status will be checked by Terminal 3 during disclosure execution.
+            </p>
+          ) : null}
         </div>
       ) : null}
 
@@ -209,7 +227,7 @@ export function PartnerKycAdapter(props: PartnerKycAdapterProps) {
             {executing ? <Loader2 className="animate-spin" /> : <Wallet />}
             Login with MetaMask
           </Button>
-        ) : !levelOneIssued ? (
+        ) : !usesExternalKycpass && !levelOneIssued ? (
           <Button asChild className="min-h-12 rounded-full bg-[#0c352b] text-white">
             <Link href="/onboarding">Create KYCPass profile</Link>
           </Button>

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { corsHeaders, withCors } from "@/lib/cors";
 import { assertDisclosureRequestBinding, assertMinimumDisclosure } from "@/lib/disclosure-policy";
 import { disclosureRequestSchema, receiptSchema } from "@/lib/domain";
 import { getServerEnv, isTeeReachableVerifierOrigin } from "@/lib/env";
@@ -8,6 +9,10 @@ import { getDisclosureAgentHealth, invokeDisclosureContract } from "@/lib/t3/ser
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 export const maxDuration = 120;
+
+export async function OPTIONS(request: Request) {
+  return new Response(null, { status: 204, headers: corsHeaders(request) });
+}
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -32,6 +37,10 @@ function sleep(ms: number) {
 function isDelegationNotReadyError(error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
   return /not permitted to act on behalf|HTTP 403: Forbidden/i.test(message);
+}
+
+function getVerifierUrl(requirement: { verifierOrigin: string; verifierUrl?: string }) {
+  return requirement.verifierUrl ?? `${requirement.verifierOrigin}/api/verifier/submit`;
 }
 
 function summarizeError(error: unknown) {
@@ -82,7 +91,7 @@ async function retryDelegatedExecution<T>(
     : new Error("Terminal 3 delegated execution failed.");
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const startedAt = Date.now();
   try {
     console.info("[KYCPass:Disclosure] health probe started.");
@@ -98,7 +107,7 @@ export async function GET() {
       ok: true,
       route: "/api/disclosures/execute",
       ...health,
-    });
+    }, { headers: withCors(request) });
   } catch (error) {
     console.error(
       `[KYCPass:Disclosure] health probe failed elapsed_ms=${Date.now() - startedAt}: ${JSON.stringify(summarizeError(error))}`,
@@ -109,7 +118,7 @@ export async function GET() {
         route: "/api/disclosures/execute",
         error: error instanceof Error ? error.message : "Disclosure route health probe failed.",
       },
-      { status: 503 },
+      { status: 503, headers: withCors(request) },
     );
   }
 }
@@ -125,18 +134,19 @@ export async function POST(request: Request) {
       claims: body.approvedClaims,
       verifier: body.requirement.verifierName,
       verifierOrigin: body.requirement.verifierOrigin,
+      verifierUrl: getVerifierUrl(body.requirement),
     });
     const env = getServerEnv();
     logDisclosureStage(requestId, "environment loaded", startedAt, {
-      verifierOrigin: env.NEXT_PUBLIC_VERIFIER_ORIGIN,
+      defaultVerifierOrigin: env.NEXT_PUBLIC_VERIFIER_ORIGIN,
       contractTail: env.T3N_CONTRACT_TAIL,
       environment: env.T3N_ENVIRONMENT,
     });
-    if (!isTeeReachableVerifierOrigin(env.NEXT_PUBLIC_VERIFIER_ORIGIN)) {
+    if (!isTeeReachableVerifierOrigin(body.requirement.verifierOrigin)) {
       throw new Error("TEE disclosure requires a public HTTPS verifier origin.");
     }
     logDisclosureStage(requestId, "verifier origin reachable", startedAt);
-    assertDisclosureRequestBinding(body.requirement, env.NEXT_PUBLIC_VERIFIER_ORIGIN);
+    assertDisclosureRequestBinding(body.requirement, body.requirement.verifierOrigin);
     logDisclosureStage(requestId, "request binding validated", startedAt);
     const approvedClaims = assertMinimumDisclosure(body.requirement, body.approvedClaims);
     logDisclosureStage(requestId, "minimum disclosure validated", startedAt, {
@@ -151,6 +161,8 @@ export async function POST(request: Request) {
             userDid: body.userDid,
             requestId: body.requestId,
             verifierName: body.requirement.verifierName,
+            verifierOrigin: body.requirement.verifierOrigin,
+            verifierUrl: getVerifierUrl(body.requirement),
             purpose: body.requirement.purpose,
             claims: approvedClaims,
           }),
@@ -167,12 +179,12 @@ export async function POST(request: Request) {
       receiptId: receipt.receiptId,
       disclosedClaims: receipt.disclosedClaims,
     });
-    return NextResponse.json(receipt);
+    return NextResponse.json(receipt, { headers: withCors(request) });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Disclosure execution failed.";
     console.error(
       `[KYCPass:Disclosure] invoke failed request=${requestId} elapsed_ms=${Date.now() - startedAt}: ${JSON.stringify(summarizeError(error))}`,
     );
-    return NextResponse.json({ error: message }, { status: 400 });
+    return NextResponse.json({ error: message }, { status: 400, headers: withCors(request) });
   }
 }

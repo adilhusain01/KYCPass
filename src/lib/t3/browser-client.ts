@@ -30,6 +30,7 @@ type BrowserSession = {
 };
 
 let sessionPromise: Promise<BrowserSession> | null = null;
+let sessionApiOrigin: string | null = null;
 
 function isMissingSessionError(error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
@@ -57,9 +58,13 @@ function getEnvironment() {
     : "testnet";
 }
 
-function configureBrowserTransport() {
+function normalizeApiOrigin(apiOrigin?: string) {
+  return (apiOrigin ?? window.location.origin).replace(/\/$/, "");
+}
+
+function configureBrowserTransport(apiOrigin?: string) {
   setEnvironment(getEnvironment());
-  setNodeUrl(`${window.location.origin}/api/t3`);
+  setNodeUrl(`${normalizeApiOrigin(apiOrigin)}/api/t3`);
   recordSessionDiagnostic(
     "transport",
     "success",
@@ -67,12 +72,17 @@ function configureBrowserTransport() {
   );
 }
 
-export async function connectUserSession(): Promise<BrowserSession> {
+export async function connectUserSession(apiOrigin?: string): Promise<BrowserSession> {
+  const nextApiOrigin = normalizeApiOrigin(apiOrigin);
+  if (sessionApiOrigin && sessionApiOrigin !== nextApiOrigin) {
+    sessionPromise = null;
+  }
+  sessionApiOrigin = nextApiOrigin;
   if (sessionPromise) return sessionPromise;
 
   sessionPromise = (async () => {
     recordSessionDiagnostic("connect", "started", "Starting a fresh Terminal 3 browser session.");
-    configureBrowserTransport();
+    configureBrowserTransport(nextApiOrigin);
     recordSessionDiagnostic("wallet-address", "started", "Requesting the active MetaMask account.");
     const address = await metamask_get_address();
     recordSessionDiagnostic("wallet-address", "success", "MetaMask returned an account.");
@@ -102,14 +112,16 @@ export async function connectUserSession(): Promise<BrowserSession> {
 
 export function disconnectUserSession() {
   sessionPromise = null;
+  sessionApiOrigin = null;
   recordSessionDiagnostic("disconnect", "warning", "Cleared the cached Terminal 3 browser session.");
 }
 
 async function withUserSession<T>(
   operationName: string,
   operation: (client: T3nClient) => Promise<T>,
+  apiOrigin?: string,
 ): Promise<T> {
-  const { client } = await connectUserSession();
+  const { client } = await connectUserSession(apiOrigin);
   recordSessionDiagnostic(operationName, "started", `Calling Terminal 3 ${operationName}.`);
   try {
     const result = await operation(client);
@@ -168,7 +180,7 @@ export async function readUserAudit() {
 }
 
 export async function grantDisclosureAccess(
-  input: DisclosureGrantInput & { userContractVersion: string },
+  input: DisclosureGrantInput & { userContractVersion: string; t3RelayOrigin?: string },
 ) {
   recordSessionDiagnostic(
     "grant-version",
@@ -176,12 +188,15 @@ export async function grantDisclosureAccess(
     `Using server-resolved Terminal 3 user-contract version: ${input.userContractVersion}.`,
   );
 
-  return withUserSession("grant-update", (client) =>
-    client.executeAndDecode({
-      script_name: "tee:user/contracts",
-      script_version: input.userContractVersion,
-      function_name: "agent-auth-update",
-      input: buildDisclosureGrant(input),
-    }),
+  return withUserSession(
+    "grant-update",
+    (client) =>
+      client.executeAndDecode({
+        script_name: "tee:user/contracts",
+        script_version: input.userContractVersion,
+        function_name: "agent-auth-update",
+        input: buildDisclosureGrant(input),
+      }),
+    input.t3RelayOrigin,
   );
 }

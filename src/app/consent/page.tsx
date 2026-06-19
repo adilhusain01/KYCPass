@@ -93,7 +93,7 @@ export default function ConsentPage() {
         <h1 className="display-type mt-5 text-5xl font-bold">No active request.</h1>
         <p className="mt-4">Create a verifier request before opening consent.</p>
         <Button asChild className="mt-7">
-          <Link href="/northstar">Open bank demo</Link>
+          <Link href="/northstar">Open platform demo</Link>
         </Button>
       </div>
     );
