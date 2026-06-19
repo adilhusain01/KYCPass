@@ -82,6 +82,13 @@ The browser smoke suite does not fake MetaMask. The complete wallet/OTP path is
 run manually or in CI with a real wallet extension profile and human-provided
 OTP. See [docs/DEMO.md](docs/DEMO.md).
 
+Onboarding requires identity claims from a verified document source. The live
+browser-only adapter accepts UIDAI Aadhaar Paperless Offline e-KYC: KYCPass
+validates the official signature, locks the mapped profile fields, submits them
+to Terminal 3, and discards the source XML. DigiLocker is documented as the
+multi-document provider boundary but remains disabled until approved requester
+credentials exist; no provider response is simulated.
+
 For a deployed build, verify the server-only Terminal 3 path before recording:
 
 ```bash
@@ -99,6 +106,7 @@ user-signed grant.
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [Security and privacy](docs/SECURITY.md)
+- [Official document sources](docs/DOCUMENT-SOURCES.md)
 - [Deployment and operations](docs/DEPLOYMENT.md)
 - [Testing guide](docs/TESTING.md)
 - [Hackathon submission copy](docs/SUBMISSION.md)

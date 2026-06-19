@@ -12,6 +12,12 @@
 - MetaMask authentication resolves the same durable Terminal 3 DID on each
   session. Terminal 3 remains authoritative for verified contacts, protected
   profile fields, and issued credentials.
+- UIDAI Offline e-KYC XML is parsed and signature-verified in the browser. The
+  XML, signature, photo, DOB, reference ID, and Aadhaar number are not sent to
+  a KYCPass route or persisted in browser storage.
+- Identity profile inputs are read-only and submission is disabled until a
+  document-source signature passes. The separate email field remains editable
+  only because Terminal 3 must send and verify its own OTP.
 - Zustand keeps active-session identifiers in memory. Its persisted browser
   cache contains only `emailVerified` and `levelOneIssued` markers keyed by
   DID; it never stores wallet addresses, contact values, profile values, OTPs,
@@ -73,3 +79,8 @@ profile data.
 Level-2 initiation is not implemented because KYCPass does not rely on an
 undocumented provider initiation API. Genuine status and VC identifiers are
 displayed when the SDK returns them.
+
+Local UIDAI signature verification establishes integrity of the imported
+source artifact, but Terminal 3 still issues `t3n.user-input.kyc.1`. DigiLocker
+fetching requires approved Requester credentials and is not simulated when
+those credentials are absent.

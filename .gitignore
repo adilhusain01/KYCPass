@@ -17,6 +17,7 @@
 
 # next.js
 /.next/
+/.next-build/
 /out/
 
 # production
@@ -26,6 +27,10 @@
 # misc
 .DS_Store
 *.pem
+
+# local identity artifacts
+/offlineaadhaar*.xml
+/private-documents/
 
 # debug
 npm-debug.log*

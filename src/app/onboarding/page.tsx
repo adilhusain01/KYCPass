@@ -1,7 +1,9 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, KeyRound, Loader2, MailCheck, ShieldCheck, WalletCards } from "lucide-react";
+import { Check, FileCheck2, KeyRound, Loader2, MailCheck, ShieldCheck, Upload, WalletCards } from "lucide-react";
+import Link from "next/link";
+import type { ChangeEvent } from "react";
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -21,6 +23,8 @@ import {
   userProfileSchema,
   type UserProfileInput,
 } from "@/lib/domain";
+import { verifyAadhaarOfflineXml } from "@/lib/document-sources/aadhaar-offline";
+import type { VerifiedDocumentClaims } from "@/lib/document-sources/types";
 import {
   connectUserSession,
   disconnectUserSession,
@@ -36,6 +40,8 @@ type OtpVerify = z.infer<typeof otpVerifySchema>;
 export default function OnboardingPage() {
   const connectingRef = useRef(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isImportingDocument, setIsImportingDocument] = useState(false);
+  const [verifiedDocument, setVerifiedDocument] = useState<VerifiedDocumentClaims | null>(null);
   const {
     address,
     userDid,
@@ -59,8 +65,8 @@ export default function OnboardingPage() {
     defaultValues: {
       first_name: "",
       last_name: "",
-      country_of_residence: "IN",
-      document_issuance_country: "IN",
+      country_of_residence: "",
+      document_issuance_country: "",
       address: "",
       ssn: "",
     },
@@ -116,9 +122,29 @@ export default function OnboardingPage() {
       await submitLevelOneProfile(values);
       markLevelOneIssued();
       profileForm.reset();
+      setVerifiedDocument(null);
       toast.success("Level-1 profile accepted and credential issuance triggered.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Profile submission failed.");
+    }
+  }
+
+  async function importOfficialDocument(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    setIsImportingDocument(true);
+    try {
+      const document = await verifyAadhaarOfflineXml(await file.text());
+      profileForm.reset(document.profile);
+      setVerifiedDocument(document);
+      toast.success("UIDAI signature verified. Review the imported fields before submission.");
+    } catch (error) {
+      setVerifiedDocument(null);
+      toast.error(error instanceof Error ? error.message : "Official document verification failed.");
+    } finally {
+      setIsImportingDocument(false);
     }
   }
 
@@ -257,52 +283,108 @@ export default function OnboardingPage() {
               </div>
             ) : (
               <form onSubmit={profileForm.handleSubmit(submitProfile)} className="grid gap-4">
+              <div className="border-2 border-black bg-[#ff9d2e] p-4 shadow-[4px_4px_0_#111]">
+                <div className="flex items-center gap-3">
+                  <FileCheck2 className="size-6 shrink-0" />
+                  <strong className="display-type text-xl">Import an official document</strong>
+                </div>
+                <p className="mt-2 text-sm leading-6">
+                  Current live adapter: UIDAI Aadhaar Paperless Offline e-KYC. Select the signed
+                  XML after unzipping it locally with your share code.
+                </p>
+                <Label
+                  htmlFor="official-document"
+                  className="mt-4 flex cursor-pointer items-center justify-center gap-2 border-2 border-black bg-white px-4 py-3 font-bold shadow-[3px_3px_0_#111]"
+                >
+                  {isImportingDocument ? <Loader2 className="animate-spin" /> : <Upload />}
+                  {isImportingDocument ? "Verifying UIDAI signature" : "Choose signed e-KYC XML"}
+                </Label>
+                <Input
+                  id="official-document"
+                  type="file"
+                  accept=".xml,text/xml,application/xml"
+                  className="sr-only"
+                  disabled={isImportingDocument}
+                  onChange={importOfficialDocument}
+                />
+                <p className="mt-3 text-xs leading-5">
+                  Verification runs in this browser. KYCPass does not upload or retain the XML,
+                  signature, photo, reference ID, or Aadhaar number. Generate a signed file at{" "}
+                  <Link
+                    href="https://myaadhaar.uidai.gov.in/offline-ekyc"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-bold underline"
+                  >
+                    MyAadhaar
+                  </Link>
+                  .
+                </p>
+              </div>
+              {verifiedDocument ? (
+                <div className="border-2 border-black bg-[#b8ff2c] p-4 shadow-[4px_4px_0_#111]">
+                  <div className="flex items-center gap-3 font-bold">
+                    <Check className="size-5" />
+                    Signature verified by {verifiedDocument.issuer}
+                  </div>
+                  <p className="mt-2 text-sm leading-6">
+                    Imported fields are locked to the verified document and will be sent only to
+                    the protected Terminal 3 profile when you submit.
+                  </p>
+                  <p className="mt-2 text-xs font-bold leading-5">
+                    {verifiedDocument.validatedSourceFieldCount} source fields validated;{" "}
+                    {verifiedDocument.mappedProfileFields.length} Terminal 3 fields mapped.
+                  </p>
+                  <p className="mt-2 text-xs leading-5">
+                    UIDAI source integrity is verified locally. Terminal 3 still issues the honest
+                    `t3n.user-input.kyc.1` credential; this does not fabricate Level 2 approval.
+                  </p>
+                </div>
+              ) : null}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label htmlFor="first_name">First name</Label>
-                  <Input id="first_name" className="mt-2" {...profileForm.register("first_name")} />
+                  <Input id="first_name" className="mt-2 bg-white" readOnly {...profileForm.register("first_name")} />
                 </div>
                 <div>
                   <Label htmlFor="last_name">Last name</Label>
-                  <Input id="last_name" className="mt-2" {...profileForm.register("last_name")} />
+                  <Input id="last_name" className="mt-2 bg-white" readOnly {...profileForm.register("last_name")} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label htmlFor="country">Residence</Label>
-                  <Input id="country" className="mt-2 uppercase" maxLength={2} {...profileForm.register("country_of_residence")} />
+                  <Input
+                    id="country"
+                    className="mt-2 bg-white uppercase"
+                    maxLength={2}
+                    readOnly
+                    {...profileForm.register("country_of_residence")}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="issuer">Document country</Label>
-                  <Input id="issuer" className="mt-2 uppercase" maxLength={2} {...profileForm.register("document_issuance_country")} />
+                  <Input
+                    id="issuer"
+                    className="mt-2 bg-white uppercase"
+                    maxLength={2}
+                    readOnly
+                    {...profileForm.register("document_issuance_country")}
+                  />
                 </div>
               </div>
               <div>
                 <Label htmlFor="address">Residential address</Label>
-                <Input id="address" className="mt-2" {...profileForm.register("address")} />
-              </div>
-              <div>
-                <Label htmlFor="ssn">US SSN (optional)</Label>
                 <Input
-                  id="ssn"
-                  type="password"
-                  className="mt-2"
-                  autoComplete="off"
-                  placeholder="123-45-6789"
-                  aria-describedby="ssn-help ssn-error"
-                  {...profileForm.register("ssn")}
+                  id="address"
+                  className="mt-2 bg-white"
+                  readOnly
+                  {...profileForm.register("address")}
                 />
-                <p id="ssn-help" className="mt-1 text-xs text-stone-600">
-                  Leave blank unless you have a US Social Security number. PAN is not accepted by
-                  Terminal 3&apos;s SSN field.
-                </p>
-                <p id="ssn-error" className="mt-1 text-xs text-red-700">
-                  {profileForm.formState.errors.ssn?.message}
-                </p>
               </div>
-              <Button disabled={!emailVerified || profileForm.formState.isSubmitting}>
+              <Button disabled={!emailVerified || !verifiedDocument || profileForm.formState.isSubmitting}>
                 {profileForm.formState.isSubmitting ? <Loader2 className="animate-spin" /> : <ShieldCheck />}
-                Submit protected profile
+                Save verified claims to Terminal 3
               </Button>
               </form>
             )}

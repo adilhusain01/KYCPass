@@ -39,8 +39,10 @@ Open `http://localhost:3000/onboarding`.
 2. Confirm the wallet session card shows a real `did:t3n`.
 3. Enter an email and send Terminal 3 OTP.
 4. Enter the received OTP.
-5. Submit Level-1 profile fields. Leave US SSN blank unless using a valid US
-   SSN test value.
+5. Select an unzipped UIDAI Offline e-KYC XML, confirm the
+   signature-verification success state, confirm every mapped identity field is
+   read-only, and submit it. A modified XML must be rejected. There is no
+   manual identity-entry fallback.
 6. Confirm the KYC card shows `t3n.user-input.kyc.1`.
 7. Reload the page and reconnect MetaMask. The DID-specific completion markers
    should restore without showing email or profile field values.
@@ -100,3 +102,5 @@ The only route that performs a user disclosure is the consent-driven `POST`.
 - Browser local storage may contain `kycpass-did-progress`, but it must not
   contain OTPs, email addresses, wallet addresses, profile fields, signatures,
   or Terminal 3 session material.
+- Browser network requests must not contain the imported UIDAI XML, signature,
+  photo, DOB, reference ID, or Aadhaar number.

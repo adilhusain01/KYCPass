@@ -50,12 +50,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <header className="sticky top-0 z-40 border-b-2 border-black bg-[#fff8e7]/95 backdrop-blur">
         <div className="mx-auto flex max-w-[1480px] items-center justify-between px-4 py-3 sm:px-6">
-          <Link href="/" className="flex items-center gap-3" onClick={() => setOpen(false)}>
+          <Link
+            href="/"
+            className="flex items-center gap-3"
+            onClick={() => setOpen(false)}
+          >
             <span className="grid size-11 place-items-center border-2 border-black bg-[#b8ff2c] shadow-[4px_4px_0_#111]">
               <FileKey2 className="size-6" strokeWidth={2.5} />
             </span>
             <span>
-              <span className="display-type block text-2xl font-extrabold leading-none">KYCPass</span>
+              <span className="display-type block text-2xl font-extrabold leading-none">
+                KYCPass
+              </span>
               <span className="code-type hidden text-[10px] uppercase tracking-[0.16em] sm:block">
                 Prove the claim. Keep the document.
               </span>
@@ -102,7 +108,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
 
         {open ? (
-          <nav id="mobile-navigation" className="grid border-t-2 border-black bg-white p-3 lg:hidden">
+          <nav
+            id="mobile-navigation"
+            className="grid border-t-2 border-black bg-white p-3 lg:hidden"
+          >
             {navItems.map((item) => (
               <Link
                 key={item.href}
@@ -124,10 +133,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <main>{children}</main>
       <footer className="mt-20 border-t-2 border-black bg-black px-4 py-8 text-white">
         <div className="mx-auto flex max-w-[1480px] flex-col justify-between gap-5 md:flex-row md:items-center">
-          <div>
-            <p className="display-type text-2xl font-bold">Identity without data sprawl.</p>
-            <p className="mt-1 text-sm text-white/70">Built for the Terminal 3 ADK challenge.</p>
-          </div>
+          <p className="display-type text-2xl font-bold">
+            Identity without data sprawl.
+          </p>
           <div className="code-type text-xs uppercase tracking-[0.16em] text-white/70">
             T3N / WASM / METAMASK / NEXT.JS
           </div>
