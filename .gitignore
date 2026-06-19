@@ -30,6 +30,7 @@
 
 # local identity artifacts
 /offlineaadhaar*.xml
+/aadhar.xml
 /private-documents/
 
 # debug

@@ -1,6 +1,32 @@
 import { describe, expect, it } from "vitest";
 
-import { buildTerminalUserProfile, receiptSchema, userProfileSchema } from "@/lib/domain";
+import {
+  buildTerminalUserProfile,
+  receiptSchema,
+  requirementSchema,
+  userProfileSchema,
+} from "@/lib/domain";
+
+describe("relying-party return routing", () => {
+  const requirement = {
+    id: "northstar-request",
+    verifierName: "Northstar Digital Bank",
+    verifierOrigin: "https://kyc-pass.vercel.app",
+    purpose: "Open a regulated savings account and satisfy identity checks.",
+    requestedClaims: ["full_name", "verified_email", "country_of_residence"],
+    expiresAt: "2026-06-19T12:00:00.000Z",
+  };
+
+  it("allows the known co-hosted relying party", () => {
+    expect(requirementSchema.parse({ ...requirement, returnPath: "/northstar" })).toBeTruthy();
+  });
+
+  it("rejects arbitrary return URLs", () => {
+    expect(() =>
+      requirementSchema.parse({ ...requirement, returnPath: "https://attacker.example" }),
+    ).toThrow();
+  });
+});
 
 describe("receipt validation", () => {
   it("accepts a sanitized receipt", () => {

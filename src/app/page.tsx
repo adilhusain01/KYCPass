@@ -47,7 +47,7 @@ export default function Home() {
                 </Link>
               </Button>
               <Button asChild size="lg" variant="neutral" className="bg-white text-black">
-                <Link href="/verifier">Open verifier demo</Link>
+                <Link href="/northstar">See the bank integration</Link>
               </Button>
             </div>
           </div>

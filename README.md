@@ -7,6 +7,12 @@ contract then resolves only the approved profile placeholders inside the
 Terminal 3 TEE and sends them directly to the verifier. KYCPass receives a
 sanitized receipt, not the claim values.
 
+The judged demo uses a separate Northstar Digital Bank account page at
+`/northstar`. Northstar requests a fixed claim set, redirects the user to the
+KYCPass consent boundary, and marks the bank profile verified from the returned
+sanitized receipt. The internal `/verifier` page remains available as a
+developer integration sandbox.
+
 There are no mock identities, simulated platform calls, or fabricated Level-2
 results.
 
@@ -38,7 +44,7 @@ pnpm dev
 
 Open `http://localhost:3000`, then use the onboarding screen to connect
 MetaMask. OTP codes and wallet signatures are entered by the user during the
-live flow.
+live flow. Open `/northstar` to run the relying-party demonstration.
 
 ### Browser session troubleshooting
 

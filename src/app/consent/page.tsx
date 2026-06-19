@@ -93,7 +93,7 @@ export default function ConsentPage() {
         <h1 className="display-type mt-5 text-5xl font-bold">No active request.</h1>
         <p className="mt-4">Create a verifier request before opening consent.</p>
         <Button asChild className="mt-7">
-          <Link href="/verifier">Open verifier</Link>
+          <Link href="/northstar">Open bank demo</Link>
         </Button>
       </div>
     );
@@ -243,7 +243,7 @@ export default function ConsentPage() {
                   : "Approve and disclose"}
             </Button>
             <Button asChild variant="neutral" className="w-full bg-white text-black">
-              <Link href="/verifier">
+              <Link href={requirement.returnPath ?? "/verifier"}>
                 <ArrowLeft /> Reject request
               </Link>
             </Button>

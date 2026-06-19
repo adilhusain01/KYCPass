@@ -4,22 +4,24 @@ Target length: 2.5 to 3 minutes.
 
 ## Recording sequence
 
-1. Open the landing page and state the problem: repeated KYC creates repeated
-   identity copies.
-2. Open Onboarding. Connect MetaMask and point out the real `did:t3n`.
+1. Open the Northstar Digital Bank account page. Show that the account is
+   blocked on identity verification and that the bank asks for three claims,
+   not a document upload.
+2. Open KYCPass Onboarding. Connect MetaMask and point out the real `did:t3n`.
 3. Request the Terminal 3 email OTP and enter the received code.
 4. Import a real UIDAI-signed Offline e-KYC XML, show the local signature check,
    show that the mapped fields are locked, and submit the protected Level-1
    profile. State clearly that the source file is discarded and the credential
    remains honest Level 1.
-5. Open Credentials and show `t3n.user-input.kyc.1`. Refresh Level-2 status only
-   to show the genuine current response.
-6. Open Verifier. Request legal name, verified email, and country of residence.
-7. On Consent, show each selected placeholder and the grant boundary.
+5. Return to Northstar and click **Verify with KYCPass**. The bank creates a
+   fixed, typed request for legal name, verified email, and country of residence.
+6. On the KYCPass consent screen, show each selected placeholder, the declared
+   bank purpose, and the grant boundary.
 8. Approve the MetaMask signature and execute `submit-kyc-proof`.
-9. Show the accepted receipt: request ID, verifier, KYC level, claim names, and
-   timestamp. Emphasize that values are absent.
-10. Open Audit and show token usage. If Terminal 3 returns no audit events for
+9. Show the accepted receipt, then return to Northstar. The bank profile now
+   displays **Identity verified** using only the receipt ID, claim categories,
+   and timestamp. Emphasize that raw values are absent from the browser state.
+10. Open KYCPass Audit and show token usage. If Terminal 3 returns no audit events for
    the DID, state that exact result and use the receipt plus usage movement as
    the live evidence.
 11. End on the architecture diagram and the phrase: "Prove the claim. Keep the

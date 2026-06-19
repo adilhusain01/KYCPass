@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, FileCheck2, ShieldCheck } from "lucide-react";
+import { ArrowRight, CheckCircle2, FileCheck2, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 
 import { PageHeader } from "@/components/page-header";
@@ -11,6 +11,7 @@ import { useWorkflowStore } from "@/store/workflow-store";
 
 export default function ReceiptPage() {
   const receipt = useWorkflowStore((state) => state.receipt);
+  const requirement = useWorkflowStore((state) => state.requirement);
 
   if (!receipt) {
     return (
@@ -18,7 +19,7 @@ export default function ReceiptPage() {
         <FileCheck2 className="mx-auto size-14" />
         <h1 className="display-type mt-5 text-5xl font-bold">No receipt yet.</h1>
         <Button asChild className="mt-7">
-          <Link href="/verifier">Create a disclosure</Link>
+          <Link href="/northstar">Open bank demo</Link>
         </Button>
       </div>
     );
@@ -66,6 +67,13 @@ export default function ReceiptPage() {
         </CardContent>
       </Card>
       <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+        {requirement?.returnPath ? (
+          <Button asChild>
+            <Link href={requirement.returnPath}>
+              Return to Northstar Bank <ArrowRight />
+            </Link>
+          </Button>
+        ) : null}
         <Button asChild>
           <Link href="/audit">Inspect audit trail</Link>
         </Button>

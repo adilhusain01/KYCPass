@@ -61,6 +61,7 @@ export const requirementSchema = z.object({
   purpose: z.string().min(10).max(300),
   requestedClaims: z.array(claimIdSchema).min(1).max(claimIds.length),
   expiresAt: z.string().datetime(),
+  returnPath: z.enum(["/northstar"]).optional(),
 });
 export type KycRequirement = z.infer<typeof requirementSchema>;
 

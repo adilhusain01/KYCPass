@@ -5,10 +5,10 @@ import {
   BadgeCheck,
   FileKey2,
   Fingerprint,
+  Landmark,
   LayoutDashboard,
   Menu,
   Settings,
-  ShieldCheck,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -22,7 +22,7 @@ import { useWorkflowStore } from "@/store/workflow-store";
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/onboarding", label: "Onboarding", icon: Fingerprint },
-  { href: "/verifier", label: "Verifier", icon: ShieldCheck },
+  { href: "/northstar", label: "Bank demo", icon: Landmark },
   { href: "/credentials", label: "Credentials", icon: BadgeCheck },
   { href: "/audit", label: "Audit", icon: Activity },
   { href: "/settings", label: "Settings", icon: Settings },
@@ -32,6 +32,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const did = useWorkflowStore((state) => state.userDid);
+
+  if (pathname.startsWith("/northstar")) {
+    return <>{children}</>;
+  }
 
   return (
     <div className="min-h-dvh">
