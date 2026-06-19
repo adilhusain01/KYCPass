@@ -4,27 +4,28 @@ Target length: 2.5 to 3 minutes.
 
 ## Recording sequence
 
-1. Open the Northstar Digital Bank account page. Show that the account is
-   blocked on identity verification and that the bank asks for three claims,
-   not a document upload.
+1. Open the Northstar Digital Bank account page. Explain that this is a sample
+   partner using KYCPass infrastructure on its own profile page, not a KYCPass
+   child flow. Show that the bank asks for three claims, not a document upload.
 2. Open KYCPass Onboarding. Connect MetaMask and point out the real `did:t3n`.
 3. Request the Terminal 3 email OTP and enter the received code.
 4. Import a real UIDAI-signed Offline e-KYC XML, show the local signature check,
    show that the mapped fields are locked, and submit the protected Level-1
    profile. State clearly that the source file is discarded and the credential
    remains honest Level 1.
-5. Return to Northstar and click **Verify with KYCPass**. The bank creates a
-   fixed, typed request for legal name, verified email, and country of residence.
-6. On the KYCPass consent screen, show each selected placeholder, the declared
-   bank purpose, and the grant boundary.
-8. Approve the MetaMask signature and execute `submit-kyc-proof`.
-9. Show the accepted receipt, then return to Northstar. The bank profile now
-   displays **Identity verified** using only the receipt ID, claim categories,
-   and timestamp. Emphasize that raw values are absent from the browser state.
-10. Open KYCPass Audit and show token usage. If Terminal 3 returns no audit events for
+5. Return to Northstar. In the embedded KYCPass adapter, click **Verify inside
+   this platform**. The partner request API creates a fixed, typed request for
+   legal name, verified email, and country of residence.
+6. Show the adapter claim list, the declared bank purpose, and the grant
+   boundary in the browser trace.
+7. Approve the MetaMask signature and execute `submit-kyc-proof`.
+8. Show the accepted receipt on the bank page. The profile now displays
+   **Identity verified** using only the receipt ID, claim categories, and
+   timestamp. Emphasize that raw values are absent from browser state.
+9. Open KYCPass Audit and show token usage. If Terminal 3 returns no audit events for
    the DID, state that exact result and use the receipt plus usage movement as
    the live evidence.
-11. End on the architecture diagram and the phrase: "Prove the claim. Keep the
+10. End on the architecture diagram and the phrase: "Prove the claim. Keep the
     document."
 
 ## Recording checklist

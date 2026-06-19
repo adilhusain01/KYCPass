@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  ArrowRight,
   BadgeCheck,
   Building2,
   Check,
@@ -14,52 +13,22 @@ import {
   WalletCards,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
-import { requirementSchema, type ClaimId } from "@/lib/domain";
+import { PartnerKycAdapter } from "@/components/partner-kyc-adapter";
+import {
+  NORTHSTAR_CLAIMS,
+  NORTHSTAR_ID,
+  NORTHSTAR_NAME,
+  NORTHSTAR_PURPOSE,
+  isNorthstarReceipt,
+} from "@/lib/northstar";
 import { useWorkflowStore } from "@/store/workflow-store";
 
-const NORTHSTAR_NAME = "Northstar Digital Bank";
-const NORTHSTAR_CLAIMS: ClaimId[] = ["full_name", "verified_email", "country_of_residence"];
-
-function isNorthstarReceipt(
-  receipt: ReturnType<typeof useWorkflowStore.getState>["receipt"],
-) {
-  return Boolean(
-    receipt &&
-      receipt.verifier === NORTHSTAR_NAME &&
-      NORTHSTAR_CLAIMS.every((claim) => receipt.disclosedClaims.includes(claim)),
-  );
-}
-
 export default function NorthstarPage() {
-  const router = useRouter();
   const userDid = useWorkflowStore((state) => state.userDid);
   const levelOneIssued = useWorkflowStore((state) => state.levelOneIssued);
   const receipt = useWorkflowStore((state) => state.receipt);
-  const setRequirement = useWorkflowStore((state) => state.setRequirement);
   const verified = isNorthstarReceipt(receipt);
-
-  function startVerification() {
-    if (!userDid || !levelOneIssued) {
-      router.push("/onboarding");
-      return;
-    }
-
-    const origin = window.location.origin;
-    setRequirement(
-      requirementSchema.parse({
-        id: `northstar-${crypto.randomUUID()}`,
-        verifierName: NORTHSTAR_NAME,
-        verifierOrigin: origin,
-        purpose: "Open a regulated savings account and satisfy customer identity checks.",
-        requestedClaims: NORTHSTAR_CLAIMS,
-        expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
-        returnPath: "/northstar",
-      }),
-    );
-    router.push("/consent");
-  }
 
   return (
     <div className="min-h-dvh bg-[#f4f1e8] text-[#12231d]">
@@ -140,8 +109,9 @@ export default function NorthstarPage() {
                 </div>
                 <h2 className="mt-7 text-4xl font-extrabold tracking-[-0.045em]">Identity verified</h2>
                 <p className="mt-3 max-w-2xl text-lg leading-8 text-[#44635a]">
-                  Northstar accepted a KYCPass proof. Your identity fields were delivered to the
-                  verification endpoint, and this profile retained only the sanitized receipt.
+                  Northstar accepted a KYCPass proof through the embedded adapter. Approved fields
+                  reached the verifier endpoint, and this profile retained only the sanitized
+                  receipt.
                 </p>
                 <div className="mt-8 grid gap-4 sm:grid-cols-3">
                   {receipt.disclosedClaims.map((claim) => (
@@ -181,8 +151,8 @@ export default function NorthstarPage() {
                 </div>
                 <h2 className="mt-7 text-4xl font-extrabold tracking-[-0.045em]">Verify your identity</h2>
                 <p className="mt-3 max-w-2xl text-lg leading-8 text-[#44635a]">
-                  Northstar needs three identity claims to activate this savings account. KYCPass
-                  will show the exact request before anything is disclosed.
+                  Northstar uses KYCPass infrastructure inside this profile page. The bank does not
+                  need DigiLocker, UIDAI, or Terminal 3 integration code of its own.
                 </p>
                 <div className="mt-8 divide-y divide-[#12231d]/10 rounded-2xl border border-[#12231d]/15">
                   {[
@@ -207,16 +177,14 @@ export default function NorthstarPage() {
                     identity data into this bank profile.
                   </div>
                 ) : null}
-                <button
-                  type="button"
-                  onClick={startVerification}
-                  className="mt-7 flex min-h-14 w-full items-center justify-center gap-3 rounded-full bg-[#0c352b] px-6 font-bold text-white transition-colors hover:bg-[#155344]"
-                >
-                  {!userDid || !levelOneIssued ? "Set up KYCPass" : "Verify with KYCPass"}
-                  <ArrowRight className="size-5" />
-                </button>
-                <div className="mt-5 flex items-center justify-center gap-2 text-center text-xs text-[#62776f]">
-                  <LockKeyhole className="size-4" /> You approve every claim on KYCPass
+                <div className="mt-7">
+                  <PartnerKycAdapter
+                    partnerId={NORTHSTAR_ID}
+                    partnerName={NORTHSTAR_NAME}
+                    purpose={NORTHSTAR_PURPOSE}
+                    requestedClaims={NORTHSTAR_CLAIMS}
+                    returnPath="/northstar"
+                  />
                 </div>
               </div>
             )}
@@ -224,8 +192,8 @@ export default function NorthstarPage() {
         </div>
 
         <footer className="mt-10 flex flex-col justify-between gap-3 border-t border-[#12231d]/15 pt-6 text-xs text-[#62776f] sm:flex-row">
-          <span>Northstar Digital Bank is a demonstration relying party.</span>
-          <span>Verification powered by KYCPass and Terminal 3</span>
+          <span>Northstar Digital Bank is a sample relying party consuming KYCPass APIs.</span>
+          <span>Embedded verification powered by KYCPass and Terminal 3</span>
         </footer>
       </main>
     </div>

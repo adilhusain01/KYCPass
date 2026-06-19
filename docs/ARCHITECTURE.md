@@ -4,7 +4,10 @@
 
 ```mermaid
 flowchart LR
-    U["User + MetaMask"] --> B["KYCPass browser"]
+    U["User + MetaMask"] --> RP["Partner profile page"]
+    RP -->|"Embedded adapter"| B["KYCPass browser SDK"]
+    RP -->|"Claim request"| API["KYCPass partner API"]
+    API --> RP
     B -->|"Encrypted SDK session"| P["Same-origin affinity relay"]
     P -->|"Opaque encrypted RPC + GCLB"| T3["Terminal 3 testnet"]
     S["KYCPass server agent"] -->|"Developer key auth"| T3
@@ -20,6 +23,11 @@ Terminal 3 node affinity without reading encrypted SDK payloads. The server
 authenticates the developer/agent DID. These are separate identities and
 separate signing paths.
 
+Partner platforms integrate through `POST /api/partners/kyc-request` and the
+browser adapter. Northstar is only a sample partner using that infrastructure.
+The partner request defines the organization, purpose, claim IDs, and expiry;
+it never includes raw identity values.
+
 Terminal 3 durably binds the protected user record and credentials to the DID.
 After a fresh MetaMask authentication, KYCPass restores only non-PII completion
 markers from a DID-keyed browser cache so the UI does not incorrectly present
@@ -32,13 +40,16 @@ verifier.
 sequenceDiagram
     participant U as User
     participant M as MetaMask
-    participant B as KYCPass browser
+    participant RP as Partner page
+    participant B as KYCPass adapter
     participant P as Same-origin relay
     participant S as KYCPass server agent
     participant T as Terminal 3
     participant C as TEE contract
     participant V as Verifier
 
+    U->>RP: Open profile verification
+    RP->>B: Load embedded adapter
     U->>B: Connect wallet
     B->>M: Request address and signature
     M-->>B: Approved signature
@@ -53,6 +64,7 @@ sequenceDiagram
     B->>P: Encrypted submitUserInput
     P->>T: Opaque RPC + affinity cookie
     T-->>B: t3n.user-input.kyc.1
+    RP->>B: Create partner claim request
     U->>B: Approve exact claim set
     B->>M: Sign scoped agent-auth-update
     M-->>T: Agent + contract + function + host grant

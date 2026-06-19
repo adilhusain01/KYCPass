@@ -7,11 +7,13 @@ contract then resolves only the approved profile placeholders inside the
 Terminal 3 TEE and sends them directly to the verifier. KYCPass receives a
 sanitized receipt, not the claim values.
 
-The judged demo uses a separate Northstar Digital Bank account page at
-`/northstar`. Northstar requests a fixed claim set, redirects the user to the
-KYCPass consent boundary, and marks the bank profile verified from the returned
-sanitized receipt. The internal `/verifier` page remains available as a
-developer integration sandbox.
+KYCPass also exposes reusable partner infrastructure. A platform can call
+`POST /api/partners/kyc-request` with its own name, purpose, and required claim
+set, embed the KYCPass adapter on its profile page, and receive a sanitized
+receipt after the user approves Terminal 3 disclosure. The sample relying-party
+page at `/northstar` demonstrates that model without requiring the bank to
+integrate DigiLocker, UIDAI, or Terminal 3 directly. The internal `/verifier`
+page remains available as a developer sandbox.
 
 There are no mock identities, simulated platform calls, or fabricated Level-2
 results.
@@ -44,7 +46,7 @@ pnpm dev
 
 Open `http://localhost:3000`, then use the onboarding screen to connect
 MetaMask. OTP codes and wallet signatures are entered by the user during the
-live flow. Open `/northstar` to run the relying-party demonstration.
+live flow. Open `/northstar` to run the sample partner integration.
 
 ### Browser session troubleshooting
 
@@ -113,6 +115,7 @@ user-signed grant.
 - [Architecture](docs/ARCHITECTURE.md)
 - [Security and privacy](docs/SECURITY.md)
 - [Official document sources](docs/DOCUMENT-SOURCES.md)
+- [Partner integration API](docs/PARTNER-INTEGRATION.md)
 - [Deployment and operations](docs/DEPLOYMENT.md)
 - [Testing guide](docs/TESTING.md)
 - [Hackathon submission copy](docs/SUBMISSION.md)

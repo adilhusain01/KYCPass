@@ -9,8 +9,8 @@ test("public flow exposes onboarding and the relying-party bank demo", async ({ 
 
   await page.goto("/northstar");
   await expect(page.getByRole("heading", { name: "Complete your banking profile." })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Set up KYCPass" })).toBeVisible();
-  await expect(page.getByText("Northstar Digital Bank is a demonstration relying party.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Login with MetaMask" })).toBeVisible();
+  await expect(page.getByText("Northstar Digital Bank is a sample relying party consuming KYCPass APIs.")).toBeVisible();
 });
 
 test("navigation remains usable on a mobile viewport", async ({ page, isMobile }) => {

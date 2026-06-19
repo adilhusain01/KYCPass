@@ -4,7 +4,8 @@
 
 - Real MetaMask and Terminal 3 browser authentication
 - OTP verification and Level-1 profile submission
-- Deterministic verifier request and consent screens
+- Generic partner request API and embedded verification adapter
+- Deterministic verifier request and consent screens for developer testing
 - Scoped Terminal 3 grant construction
 - Server-side developer agent
 - Rust WASI Preview 2 disclosure contract
@@ -43,7 +44,7 @@ curl -fsS https://your-public-origin.example/api/disclosures/execute
 ```
 
 The disclosure `GET` route is a health probe only. The live disclosure remains
-the consent-driven `POST /api/disclosures/execute`.
+the adapter or consent-driven `POST /api/disclosures/execute`.
 
 ## Versioning
 

@@ -95,7 +95,7 @@ export default function DashboardPage() {
           <CardContent className="grid gap-3 sm:grid-cols-2">
             {[
               { href: "/onboarding", icon: KeyRound, title: "Establish identity", text: "MetaMask, OTP, protected profile." },
-              { href: "/verifier", icon: ShieldCheck, title: "Request claims", text: "Create a deterministic requirement." },
+              { href: "/northstar", icon: ShieldCheck, title: "Partner adapter", text: "Verify inside a platform profile." },
               { href: "/credentials", icon: BadgeCheck, title: "Inspect credentials", text: "Read genuine T3 status and VC IDs." },
               { href: "/audit", icon: Activity, title: "Review evidence", text: "Usage and audit events from T3." },
             ].map((item) => (

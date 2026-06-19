@@ -6,8 +6,9 @@ KYCPass: reusable KYC disclosure without reusable copies
 
 ## One-line description
 
-KYCPass lets users verify once with Terminal 3 and disclose the minimum required
-KYC claims directly from a TEE to a verifier, under a MetaMask-approved grant.
+KYCPass lets users verify once with Terminal 3 and lets any partner platform
+request the minimum required KYC claims through an embedded adapter, under a
+MetaMask-approved grant.
 
 ## Description
 
@@ -16,10 +17,11 @@ copies across forms, databases, support systems, and vendors. KYCPass replaces
 that document trail with a user-controlled disclosure flow.
 
 The user authenticates a real Terminal 3 DID with MetaMask, verifies email by
-OTP, and creates a protected Level-1 profile. A verifier requests named claims,
-such as legal name, verified email, and country of residence. KYCPass
-deterministically computes the minimum claim set and presents the exact grant:
-agent DID, TEE contract, function, contract version, and verifier host.
+OTP, and creates a protected Level-1 profile. A partner platform requests named
+claims, such as legal name, verified email, and country of residence, through
+the KYCPass API and browser adapter. KYCPass deterministically computes the
+minimum claim set and presents the exact grant: agent DID, TEE contract,
+function, contract version, and verifier host.
 
 After approval, a Rust WASI Preview 2 contract runs in Terminal 3. It sends fixed
 profile placeholders through `http-with-placeholders`; Terminal 3 resolves the

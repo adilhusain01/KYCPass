@@ -48,10 +48,11 @@ Open `http://localhost:3000/onboarding`.
    should restore without showing email or profile field values.
 8. Open `/credentials` and refresh Level 2. If no provider session exists, the
    expected result is "Not initiated"; KYCPass must not fabricate approval.
-9. Open `/verifier`, choose claims, and create a consent request.
+9. Open `/northstar`, confirm the embedded adapter restores the same DID state,
+   and create a partner verification request from inside the bank page.
 
-On localhost, the consent page intentionally blocks final TEE execution before
-MetaMask grant approval because Terminal 3 cannot call your laptop's localhost.
+On localhost, final TEE execution is intentionally blocked before MetaMask
+grant approval because Terminal 3 cannot call your laptop's localhost.
 
 ## 3. Final public HTTPS TEE test
 
@@ -70,8 +71,9 @@ pnpm t3:check
 Then test:
 
 1. Complete onboarding on the deployed site.
-2. Create a verifier request.
-3. Inspect the consent page. The host must match the deployed hostname.
+2. Open `/northstar` and create the embedded partner verification request.
+3. Inspect the adapter grant boundary. The host must match the deployed
+   hostname.
 4. Approve the MetaMask grant.
 5. Execute the disclosure.
 6. Confirm `/receipt` shows only receipt metadata and claim names, never claim
@@ -90,13 +92,16 @@ curl -fsS https://your-public-origin.example/api/disclosures/execute
 
 `GET /api/disclosures/execute` is a non-disclosing server-agent probe. It proves
 the deployed function can authenticate and load the Terminal 3 execution stack.
-The only route that performs a user disclosure is the consent-driven `POST`.
+The only route that performs a user disclosure is the adapter or
+consent-driven `POST`.
 
 ## 4. Security spot checks
 
 - `/api/config` must not include `T3N_API_KEY` or `KYCPASS_VERIFIER_SECRET`.
 - `/api/verifier/submit` must return `401` without `x-kycpass-contract-secret`.
 - `/api/t3/api/admin` must return `404`.
+- `/api/partners/kyc-request` must return a requirement and adapter metadata,
+  not profile values or secrets.
 - `GET /api/disclosures/execute` must not include claim values, profile fields,
   OTPs, wallet addresses, or secrets.
 - Browser local storage may contain `kycpass-did-progress`, but it must not
