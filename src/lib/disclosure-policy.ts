@@ -75,8 +75,12 @@ export function assertDisclosureRequestBinding(
   configuredVerifierOrigin: string,
   now = new Date(),
 ) {
-  if (new URL(requirement.verifierOrigin).origin !== new URL(configuredVerifierOrigin).origin) {
+  const expectedOrigin = new URL(configuredVerifierOrigin).origin;
+  if (new URL(requirement.verifierOrigin).origin !== expectedOrigin) {
     throw new Error("Disclosure request verifier origin does not match the configured verifier.");
+  }
+  if (requirement.verifierUrl && new URL(requirement.verifierUrl).origin !== expectedOrigin) {
+    throw new Error("Disclosure request verifier URL does not match the configured verifier.");
   }
   if (new Date(requirement.expiresAt).getTime() <= now.getTime()) {
     throw new Error("Disclosure request has expired.");

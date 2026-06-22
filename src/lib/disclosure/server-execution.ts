@@ -76,7 +76,7 @@ export async function executeDisclosureRequest(
     throw new Error("TEE disclosure requires a public HTTPS verifier origin.");
   }
 
-  assertDisclosureRequestBinding(body.requirement, body.requirement.verifierOrigin);
+  assertDisclosureRequestBinding(body.requirement, env.NEXT_PUBLIC_VERIFIER_ORIGIN);
   const approvedClaims = assertMinimumDisclosure(body.requirement, body.approvedClaims);
   logDisclosureStage(requestId, "policy validated", startedAt, context, {
     approvedClaims,

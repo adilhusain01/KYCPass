@@ -4,7 +4,8 @@ Target length: 2.5 to 3 minutes.
 
 ## Agent-focused judging insert
 
-After showing the browser grant, open an MCP host and call
+After showing the browser grant for the deployed verifier hostname, open Codex
+App and call
 `kycpass_get_capabilities`. Point out the real KYCPass agent `did:t3n`, the
 `submit-kyc-proof` contract function, supported claims, and the explicit
 statement that no user private key or plaintext PII is returned.
@@ -14,6 +15,20 @@ agent supplies identifiers and intent, Terminal 3 checks the user's grant, the
 TEE sends approved values directly to the verifier, and the MCP tool receives
 only the sanitized receipt. Frame this as the agent completing the last-mile
 identity step without identity entering model context.
+
+Use this sequence during the live demo:
+
+1. In `/northstar`, connect the demo MetaMask identity and approve the scoped
+   KYCPass grant. Keep the configured host visible.
+2. In Codex App, ask: `Use KYCPass MCP to inspect its capabilities. Do not read
+   or request private identity values.`
+3. Ask Codex to disclose legal name, verified email, and country of residence
+   for the demo `did:t3n`, using the deployed KYCPass origin and a fresh
+   15-minute request.
+4. Show the MCP result: agent DID, accepted status, receipt ID, claim categories,
+   and timestamp. Point out that claim values are absent.
+5. Explain that revoking or changing the host grant makes Terminal 3 return
+   `grant_egress_denied`; the AI agent cannot override that decision.
 
 ## 90-second pitch
 

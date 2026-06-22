@@ -99,14 +99,36 @@ Example MCP host configuration:
 
 1. Call `kycpass_get_capabilities`.
 2. Obtain a typed partner requirement from `/api/partners/kyc-request`.
-3. Confirm the user has approved the displayed claim set and Terminal 3 grant
-   in the KYCPass browser flow.
+3. In the KYCPass browser flow, connect the same MetaMask identity and approve
+   the displayed claim set. This creates the Terminal 3 grant for the exact
+   agent DID, contract, function, version, and verifier host.
 4. Call `kycpass_disclose` with the same requirement and approved claims.
 5. Use the sanitized receipt as completion evidence.
 
 The agent must not ask the user for a wallet private key. Self-custody users
 approve grants through MetaMask; the KYCPass server authenticates only its own
 developer/agent DID with the server-held Terminal 3 key.
+
+## Codex App demo
+
+Add a custom **STDIO** MCP with these values:
+
+- Name: `KYCPass`
+- Command: `pnpm`
+- Arguments: `--silent`, `mcp:start`
+- Working directory: the absolute KYCPass repository path
+- Environment: `KYCPASS_API_ORIGIN` and `KYCPASS_AGENT_ACCESS_TOKEN`
+
+Run `kycpass_get_capabilities` first. Before the first protected action, open
+the deployed `/northstar` page with the same MetaMask identity and approve the
+KYCPass verification grant. Then ask Codex to invoke `kycpass_disclose` for the
+approved DID, verifier origin, and claim set. Codex receives only the sanitized
+receipt.
+
+If Terminal 3 returns `grant_egress_denied`, the MCP connection is working but
+the user authorization is absent, stale, revoked, or scoped to another host.
+Approve a fresh grant for the configured verifier host and retry. An agent
+cannot repair this condition itself because doing so would bypass user consent.
 
 ## Production hardening
 

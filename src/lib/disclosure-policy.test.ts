@@ -59,4 +59,17 @@ describe("minimum disclosure policy", () => {
       assertDisclosureRequestBinding(requirement, "https://verifier.example/", new Date("2029-01-01")),
     ).not.toThrow();
   });
+
+  it("rejects a verifier URL outside the configured origin", () => {
+    expect(() =>
+      assertDisclosureRequestBinding(
+        {
+          ...requirement,
+          verifierUrl: "https://attacker.example/api/verifier/submit",
+        },
+        "https://verifier.example",
+        new Date("2029-01-01"),
+      ),
+    ).toThrow("verifier URL does not match");
+  });
 });

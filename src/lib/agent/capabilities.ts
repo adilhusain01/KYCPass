@@ -5,6 +5,7 @@ import { getServerEnv } from "@/lib/env";
 
 export function getAgentCapabilities() {
   const env = getServerEnv();
+  const verifierOrigin = env.NEXT_PUBLIC_VERIFIER_ORIGIN.replace(/\/$/, "");
   return {
     schemaVersion: "1.0",
     name: "KYCPass Disclosure Agent",
@@ -19,6 +20,8 @@ export function getAgentCapabilities() {
     action: {
       id: "kyc.disclose",
       endpoint: "/api/agent/v1/actions/disclose",
+      verifierOrigin,
+      authorizationUrl: `${verifierOrigin}/verifier`,
       contract: `${env.T3N_CONTRACT_TAIL}@${env.T3N_CONTRACT_VERSION}`,
       function: "submit-kyc-proof",
       authorization:
