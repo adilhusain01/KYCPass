@@ -68,7 +68,10 @@ The stdio MCP server exposes:
 
 - `kycpass_get_capabilities`: read the agent identity, action boundary, and
   supported claim catalog.
-- `kycpass_disclose`: request the protected Terminal 3 disclosure action.
+- `kycpass_disclose`: request the protected Terminal 3 disclosure action. The
+  only required input is the user's `did:t3n`. The MCP adapter creates fresh
+  invocation and request IDs, verifier metadata, and a 15-minute requirement.
+  A previous receipt ID is never used as an input.
 
 Run it locally against the deployed API:
 
@@ -122,8 +125,9 @@ Add a custom **STDIO** MCP with these values:
 Run `kycpass_get_capabilities` first. Before the first protected action, open
 the deployed `/northstar` page with the same MetaMask identity and approve the
 KYCPass verification grant. Then ask Codex to invoke `kycpass_disclose` for the
-approved DID, verifier origin, and claim set. Codex receives only the sanitized
-receipt.
+approved DID and claim set. Codex receives only the sanitized receipt. Do not
+manually provide request IDs, invocation IDs, expiry, verifier URLs, or an old
+receipt ID; the MCP adapter creates and validates those values.
 
 If Terminal 3 returns `grant_egress_denied`, the MCP connection is working but
 the user authorization is absent, stale, revoked, or scoped to another host.

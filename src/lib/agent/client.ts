@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { agentDisclosureActionSchema, type AgentDisclosureAction } from "@/lib/agent/actions";
-import { receiptSchema } from "@/lib/domain";
+import { claimIdSchema, receiptSchema, requirementSchema, type ClaimId } from "@/lib/domain";
 
 const agentActionResultSchema = z.object({
   invocationId: z.string().uuid(),
@@ -11,6 +11,10 @@ const agentActionResultSchema = z.object({
 });
 
 export type AgentActionResult = z.infer<typeof agentActionResultSchema>;
+
+const partnerRequirementResponseSchema = z.object({
+  requirement: requirementSchema,
+});
 
 function normalizeOrigin(origin: string) {
   return origin.replace(/\/$/, "");
@@ -34,6 +38,36 @@ export async function fetchAgentCapabilities(origin: string) {
     throw new Error((body as { error?: string }).error ?? "KYCPass capabilities unavailable.");
   }
   return body;
+}
+
+export async function createAgentDisclosureRequirement(
+  origin: string,
+  input: {
+    verifierName: string;
+    purpose: string;
+    requestedClaims: ClaimId[];
+  },
+) {
+  const response = await fetch(`${normalizeOrigin(origin)}/api/partners/kyc-request`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      partner: {
+        id: "mcp-agent",
+        name: input.verifierName,
+      },
+      purpose: input.purpose,
+      requestedClaims: z.array(claimIdSchema).min(1).parse(input.requestedClaims),
+    }),
+  });
+  const body = await readJson(response);
+  if (!response.ok) {
+    throw new Error((body as { error?: string }).error ?? "KYCPass request creation failed.");
+  }
+  return partnerRequirementResponseSchema.parse(body).requirement;
 }
 
 export async function submitAgentDisclosure(
