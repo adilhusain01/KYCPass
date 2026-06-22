@@ -85,7 +85,7 @@ Example MCP host configuration:
   "mcpServers": {
     "kycpass": {
       "command": "pnpm",
-      "args": ["--dir", "/absolute/path/to/KYCPass", "mcp:start"],
+      "args": ["--silent", "--dir", "/absolute/path/to/KYCPass", "mcp:start"],
       "env": {
         "KYCPASS_API_ORIGIN": "https://kyc-pass.vercel.app",
         "KYCPASS_AGENT_ACCESS_TOKEN": "<agent-access-token>"
