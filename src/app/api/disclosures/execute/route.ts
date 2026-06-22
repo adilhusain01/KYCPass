@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 
 import { corsHeaders, withCors } from "@/lib/cors";
-import { assertDisclosureRequestBinding, assertMinimumDisclosure } from "@/lib/disclosure-policy";
-import { disclosureRequestSchema, receiptSchema } from "@/lib/domain";
-import { getServerEnv, isTeeReachableVerifierOrigin } from "@/lib/env";
-import { getDisclosureAgentHealth, invokeDisclosureContract } from "@/lib/t3/server-client";
+import {
+  executeDisclosureRequest,
+  summarizeDisclosureError,
+} from "@/lib/disclosure/server-execution";
+import { getDisclosureAgentHealth } from "@/lib/t3/server-client";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -30,67 +31,6 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string)
   });
 }
 
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function isDelegationNotReadyError(error: unknown) {
-  const message = error instanceof Error ? error.message : String(error);
-  return /not permitted to act on behalf|HTTP 403: Forbidden/i.test(message);
-}
-
-function getVerifierUrl(requirement: { verifierOrigin: string; verifierUrl?: string }) {
-  return requirement.verifierUrl ?? `${requirement.verifierOrigin}/api/verifier/submit`;
-}
-
-function summarizeError(error: unknown) {
-  if (!(error instanceof Error)) {
-    return { message: String(error) };
-  }
-
-  return {
-    name: error.name,
-    message: error.message,
-    stack: error.stack?.split("\n").slice(0, 8).join("\n"),
-  };
-}
-
-function logDisclosureStage(
-  requestId: string,
-  stage: string,
-  startedAt: number,
-  details: Record<string, unknown> = {},
-) {
-  console.info(
-    `[KYCPass:Disclosure] ${stage} request=${requestId} elapsed_ms=${Date.now() - startedAt} details=${JSON.stringify(details)}`,
-  );
-}
-
-async function retryDelegatedExecution<T>(
-  operation: () => Promise<T>,
-  requestId: string,
-): Promise<T> {
-  const delays = [0];
-  let lastError: unknown;
-
-  for (let attempt = 0; attempt < delays.length; attempt += 1) {
-    if (delays[attempt] > 0) await sleep(delays[attempt]);
-    try {
-      return await operation();
-    } catch (error) {
-      lastError = error;
-      if (!isDelegationNotReadyError(error) || attempt === delays.length - 1) break;
-      console.warn(
-        `[KYCPass:Disclosure] delegation not ready request=${requestId} attempt=${attempt + 1}; retrying.`,
-      );
-    }
-  }
-
-  throw lastError instanceof Error
-    ? lastError
-    : new Error("Terminal 3 delegated execution failed.");
-}
-
 export async function GET(request: Request) {
   const startedAt = Date.now();
   try {
@@ -110,7 +50,7 @@ export async function GET(request: Request) {
     }, { headers: withCors(request) });
   } catch (error) {
     console.error(
-      `[KYCPass:Disclosure] health probe failed elapsed_ms=${Date.now() - startedAt}: ${JSON.stringify(summarizeError(error))}`,
+      `[KYCPass:Disclosure] health probe failed elapsed_ms=${Date.now() - startedAt}: ${JSON.stringify(summarizeDisclosureError(error))}`,
     );
     return NextResponse.json(
       {
@@ -128,62 +68,16 @@ export async function POST(request: Request) {
   let requestId = "unparsed";
   try {
     console.info("[KYCPass:Disclosure] request body parsing started.");
-    const body = disclosureRequestSchema.parse(await request.json());
-    requestId = body.requestId;
-    logDisclosureStage(requestId, "request accepted", startedAt, {
-      claims: body.approvedClaims,
-      verifier: body.requirement.verifierName,
-      verifierOrigin: body.requirement.verifierOrigin,
-      verifierUrl: getVerifierUrl(body.requirement),
-    });
-    const env = getServerEnv();
-    logDisclosureStage(requestId, "environment loaded", startedAt, {
-      defaultVerifierOrigin: env.NEXT_PUBLIC_VERIFIER_ORIGIN,
-      contractTail: env.T3N_CONTRACT_TAIL,
-      environment: env.T3N_ENVIRONMENT,
-    });
-    if (!isTeeReachableVerifierOrigin(body.requirement.verifierOrigin)) {
-      throw new Error("TEE disclosure requires a public HTTPS verifier origin.");
+    const input = await request.json();
+    if (input && typeof input === "object" && "requestId" in input) {
+      requestId = String(input.requestId);
     }
-    logDisclosureStage(requestId, "verifier origin reachable", startedAt);
-    assertDisclosureRequestBinding(body.requirement, body.requirement.verifierOrigin);
-    logDisclosureStage(requestId, "request binding validated", startedAt);
-    const approvedClaims = assertMinimumDisclosure(body.requirement, body.approvedClaims);
-    logDisclosureStage(requestId, "minimum disclosure validated", startedAt, {
-      approvedClaims,
-      requestedClaims: body.requirement.requestedClaims,
-    });
-    logDisclosureStage(requestId, "invoke started", startedAt);
-    const result = await withTimeout(
-      retryDelegatedExecution(
-        () =>
-          invokeDisclosureContract({
-            userDid: body.userDid,
-            requestId: body.requestId,
-            verifierName: body.requirement.verifierName,
-            verifierOrigin: body.requirement.verifierOrigin,
-            verifierUrl: getVerifierUrl(body.requirement),
-            purpose: body.requirement.purpose,
-            claims: approvedClaims,
-          }),
-        requestId,
-      ),
-      115_000,
-      "Terminal 3 disclosure execution exceeded the hosted function window before returning a receipt. The scoped grant is signed; retry execution or run the disclosure route on a longer-lived Node host.",
-    );
-    logDisclosureStage(requestId, "invoke returned", startedAt, {
-      resultType: typeof result,
-    });
-    const receipt = receiptSchema.parse(result);
-    logDisclosureStage(requestId, "receipt validated", startedAt, {
-      receiptId: receipt.receiptId,
-      disclosedClaims: receipt.disclosedClaims,
-    });
+    const receipt = await executeDisclosureRequest(input, { source: "browser" });
     return NextResponse.json(receipt, { headers: withCors(request) });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Disclosure execution failed.";
     console.error(
-      `[KYCPass:Disclosure] invoke failed request=${requestId} elapsed_ms=${Date.now() - startedAt}: ${JSON.stringify(summarizeError(error))}`,
+      `[KYCPass:Disclosure] invoke failed request=${requestId} elapsed_ms=${Date.now() - startedAt}: ${JSON.stringify(summarizeDisclosureError(error))}`,
     );
     return NextResponse.json({ error: message }, { status: 400, headers: withCors(request) });
   }

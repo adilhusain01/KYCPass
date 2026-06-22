@@ -2,6 +2,19 @@
 
 Target length: 2.5 to 3 minutes.
 
+## Agent-focused judging insert
+
+After showing the browser grant, open an MCP host and call
+`kycpass_get_capabilities`. Point out the real KYCPass agent `did:t3n`, the
+`submit-kyc-proof` contract function, supported claims, and the explicit
+statement that no user private key or plaintext PII is returned.
+
+Then call `kycpass_disclose` with the already approved partner requirement. The
+agent supplies identifiers and intent, Terminal 3 checks the user's grant, the
+TEE sends approved values directly to the verifier, and the MCP tool receives
+only the sanitized receipt. Frame this as the agent completing the last-mile
+identity step without identity entering model context.
+
 ## 90-second pitch
 
 "Every regulated platform asks users for the same identity document. That

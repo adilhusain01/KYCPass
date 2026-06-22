@@ -21,6 +21,11 @@ cost, breach exposure, and deletion obligations.
 KYCPass changes the integration boundary from **send us your document** to
 **prove these specific claims**.
 
+It also exposes that protected disclosure as an agent action. AI applications
+can call KYCPass through MCP or an authenticated REST API, while the user keeps
+their wallet key and Terminal 3 independently enforces the delegated contract,
+function, and verifier-host boundary.
+
 ## How it works
 
 1. **Create a private identity.** The user connects MetaMask and authenticates a
@@ -46,9 +51,11 @@ KYCPass changes the integration boundary from **send us your document** to
 ```mermaid
 flowchart LR
     U["User + MetaMask"] --> A["Partner adapter"]
+    AI["AI agent / MCP host"] --> AA["Agent Action API"]
+    AA --> S["KYCPass did:t3n agent"]
     A --> R["KYCPass claim request API"]
     A --> T3["Terminal 3 encrypted session"]
-    S["KYCPass agent"] --> T3
+    S --> T3
     T3 --> W["Rust WASI contract in TEE"]
     W -->|"Approved values only"| V["Partner verifier"]
     V -->|"Sanitized receipt"| W
@@ -73,6 +80,9 @@ invokes only grants the user has approved.
 - **Reusable infrastructure:** partners integrate a request API, browser
   adapter, and verifier callback instead of integrating UIDAI, DigiLocker, and
   Terminal 3 separately.
+- **Agent-ready action layer:** MCP and REST clients can request a protected
+  disclosure, but Terminal 3 executes it only when the user has granted the
+  KYCPass agent the exact capability.
 - **Honest evidence:** receipts, audit responses, and token usage are displayed
   exactly as returned. KYCPass does not fabricate Level-2 approval or VCs.
 
@@ -115,6 +125,22 @@ Embed the adapter in the partner's own profile page:
 Northstar is included as a sample relying party, not as privileged KYCPass
 logic. The same API and adapter can be embedded by any approved platform.
 
+### Agent and MCP access
+
+Agents discover the executing `did:t3n`, supported claims, and contract boundary
+at `GET /api/agent/v1/capabilities`. Authenticated callers invoke
+`POST /api/agent/v1/actions/disclose`, or use the included stdio MCP server:
+
+```bash
+KYCPASS_API_ORIGIN=https://kyc-pass.vercel.app \
+KYCPASS_AGENT_ACCESS_TOKEN=<agent-access-token> \
+pnpm mcp:start
+```
+
+The API token authenticates the caller to KYCPass. The actual protected action
+still requires the user's prior Terminal 3 grant. See
+[Agent integration](docs/AGENT-INTEGRATION.md).
+
 ## Use cases
 
 - Banks, fintech products, and exchanges requesting reusable KYC claims
@@ -151,6 +177,7 @@ provider-initiation flow or simulate approval.
 - Deployed Rust WASI Preview 2 disclosure contract
 - Terminal 3 TEE execution through `http-with-placeholders`
 - Generic partner request API, embedded adapter, and external verifier callback
+- Authenticated Agent Action API and stdio MCP tools
 - Sanitized receipt validation, audit presentation, and token-usage dashboard
 - First-party session-affinity relay for strict browser privacy settings
 - Architecture, security, partner integration, deployment, and demo guides
@@ -203,6 +230,7 @@ by the browser smoke suite.
 - [Architecture](docs/ARCHITECTURE.md)
 - [Security and privacy](docs/SECURITY.md)
 - [Partner integration](docs/PARTNER-INTEGRATION.md)
+- [Agent and MCP integration](docs/AGENT-INTEGRATION.md)
 - [Separate partner deployment](docs/NORTHSTAR-SEPARATE-APP.md)
 - [Document sources](docs/DOCUMENT-SOURCES.md)
 - [Deployment](docs/DEPLOYMENT.md)

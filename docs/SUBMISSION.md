@@ -34,6 +34,13 @@ and country of residence. KYCPass deterministically minimizes the request and
 presents an exact MetaMask-approved grant bound to one agent DID, Rust WASI
 contract, function, version, and verifier host.
 
+KYCPass also exposes the same protected action through an authenticated Agent
+Action API and MCP server. An AI agent can initiate an approved KYC disclosure
+for a workflow such as opening a bank account, but it never receives the user's
+private key or identity values. Terminal 3 accepts the action only when the
+user's grant authorizes the KYCPass `did:t3n` agent for that exact contract,
+function, and destination.
+
 Inside Terminal 3, the contract uses `http-with-placeholders` to resolve only
 the approved profile fields after the WASM boundary and send them directly to
 the partner verifier. The agent never receives plaintext identity data; it gets
@@ -68,6 +75,7 @@ KYC, fewer identity copies, and reusable user-controlled verification.
 - A wallet-bound private identity profile on Terminal 3
 - Browser-only verification of supported official document artifacts
 - A typed partner API for minimum claim requests
+- A typed Agent Action API and MCP tools for AI workflows
 - An embedded adapter that remains inside the partner experience
 - MetaMask-approved, host-bound Terminal 3 grants
 - A Rust WASI Preview 2 disclosure contract running through the TEE path
@@ -94,6 +102,7 @@ KYC, fewer identity copies, and reusable user-controlled verification.
 - Seller, contractor, and workforce verification
 - Insurance, telecom, travel, rental, and regulated commerce
 - Private AI agents that need authorization without identity access
+- Autonomous financial onboarding without placing PII in model context
 
 ## Differentiation
 
@@ -113,6 +122,7 @@ used in the judged flow.
 - Scoped consent and deterministic claim minimization
 - Rust WASI Preview 2 contract deployment and TEE execution
 - Generic partner API, embedded adapter, and external callback
+- Authenticated Agent Action API, capability discovery, and MCP server
 - Sanitized receipt, audit, usage, diagnostics, and security tests
 - Separate partner-deployment architecture and integration documentation
 

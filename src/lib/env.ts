@@ -8,6 +8,10 @@ const serverEnvSchema = z.object({
   T3N_CONTRACT_VERSION: z.string().regex(/^\d+\.\d+\.\d+$/).default("0.1.0"),
   NEXT_PUBLIC_VERIFIER_ORIGIN: z.string().url(),
   KYCPASS_VERIFIER_SECRET: z.string().min(24),
+  KYCPASS_AGENT_ACCESS_TOKEN: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.string().min(32).optional(),
+  ),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;

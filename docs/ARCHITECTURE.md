@@ -5,12 +5,14 @@
 ```mermaid
 flowchart LR
     U["User + MetaMask"] --> RP["Partner profile page"]
+    AI["AI agent / MCP host"] --> M["KYCPass MCP or Agent API"]
+    M --> S["KYCPass did:t3n agent"]
     RP -->|"Embedded adapter"| B["KYCPass browser SDK"]
     RP -->|"Claim request"| API["KYCPass partner API"]
     API --> RP
     B -->|"Encrypted SDK session"| P["Same-origin affinity relay"]
     P -->|"Opaque encrypted RPC + GCLB"| T3["Terminal 3 testnet"]
-    S["KYCPass server agent"] -->|"Developer key auth"| T3
+    S -->|"Developer key auth"| T3
     T3 --> C["kyc-disclosure WASM in TEE"]
     C -->|"Resolved approved claims"| V["Verifier endpoint"]
     V -->|"Sanitized receipt"| C
@@ -22,6 +24,12 @@ The browser authenticates the end-user DID. The same-origin relay preserves
 Terminal 3 node affinity without reading encrypted SDK payloads. The server
 authenticates the developer/agent DID. These are separate identities and
 separate signing paths.
+
+An external AI agent can orchestrate the same protected action through MCP or
+the authenticated Agent Action API. The caller never impersonates the user and
+does not receive the user key or protected values. Terminal 3 authorizes the
+KYCPass agent DID against the user's existing contract, function, and host
+grant before execution.
 
 Partner platforms integrate through `POST /api/partners/kyc-request` and the
 browser adapter. Northstar is only a sample partner using that infrastructure.

@@ -23,6 +23,12 @@
   DID; it never stores wallet addresses, contact values, profile values, OTPs,
   signatures, or Terminal 3 session material.
 - The agent receives claim identifiers, not claim values.
+- Agent Action API callers authenticate with a server-managed bearer token,
+  while Terminal 3 separately enforces the user's grant to the KYCPass agent.
+  The API token cannot create, widen, or replace that grant.
+- The MCP server calls the Agent Action API and never accepts a wallet private
+  key, OTP, document body, profile value, developer key, or verifier secret as
+  tool input.
 - The Rust contract converts identifiers to fixed `{{profile.*}}` placeholders.
 - Terminal 3 resolves placeholders after the WASM boundary.
 - The verifier records no raw PII and returns only receipt metadata.
@@ -52,6 +58,11 @@ authorization or proof by the disclosure route.
 contract accepts a fixed claim catalog and Terminal 3 enforces user context and
 egress. Server compromise remains serious and requires key rotation.
 
+**Compromised external agent:** it can request actions allowed by its KYCPass
+API credential, but Terminal 3 still rejects execution without the user's
+matching grant. Rotate the agent bearer token and revoke the Terminal 3 grant
+after suspected compromise.
+
 **Malicious verifier:** it receives only the approved fields and cannot expand
 the placeholder set. The contract validates the returned receipt against the
 request ID, verifier, KYC level, status, and claim set.
@@ -68,6 +79,8 @@ profile data.
 
 - Store production secrets in the hosting platform secret manager.
 - Rotate the developer key and verifier secret after any suspected exposure.
+- Rotate `KYCPASS_AGENT_ACCESS_TOKEN` independently from the Terminal 3
+  developer key and verifier secret.
 - Use a dedicated HTTPS verifier origin with no third-party request logging.
 - Disable body capture in proxies, APM tools, and serverless function logs.
 - Review Terminal 3 contract status, grant behavior, token usage, and any audit

@@ -14,6 +14,15 @@ Generate `KYCPASS_VERIFIER_SECRET` with at least 32 random bytes:
 openssl rand -hex 32
 ```
 
+Generate a separate Agent Action API credential:
+
+```bash
+openssl rand -hex 32
+```
+
+Store that value as `KYCPASS_AGENT_ACCESS_TOKEN`. Do not reuse the Terminal 3
+developer key or verifier secret.
+
 ## 2. Verify locally
 
 ```bash
@@ -45,6 +54,9 @@ Verify:
 - `/api/t3` rejects every path and method except `GET /status`,
   `GET /api/contracts/current`, and `POST /api/rpc`;
 - `/api/verifier/submit` rejects requests without the contract secret;
+- `/api/agent/v1/capabilities` returns the public agent DID and action boundary;
+- `/api/agent/v1/actions/disclose` rejects requests without the agent bearer
+  token and still fails closed when no matching Terminal 3 user grant exists;
 - HTTPS is active;
 - request-body logging is disabled.
 
