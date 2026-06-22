@@ -2,6 +2,41 @@
 
 Target length: 2.5 to 3 minutes.
 
+## 90-second pitch
+
+"Every regulated platform asks users for the same identity document. That
+creates repeated friction for the user, repeated provider integrations for the
+platform, and repeated sensitive copies for attackers to target.
+
+KYCPass changes the request from 'upload your document' to 'prove these exact
+claims.' A user connects MetaMask, authenticates a real Terminal 3 DID, verifies
+email by OTP, and imports a UIDAI Paperless Offline e-KYC file. We verify the
+official signature locally, map the supported fields into Terminal 3's
+protected Level-1 profile, and discard the source document.
+
+Now imagine a bank needs legal name, verified email, and country of residence.
+It embeds KYCPass in its own profile page and requests only those three claims.
+The user sees the purpose and signs a grant restricted to our agent, Rust WASI
+contract, function, version, and the bank's verifier host.
+
+Terminal 3 executes the contract inside its protected environment, resolves
+only the approved profile placeholders, and sends those values directly to the
+bank. KYCPass never receives the plaintext identity. We receive this sanitized
+receipt proving which categories were accepted.
+
+So the user verifies once, partners avoid document-provider integrations, and
+every disclosure is minimal, explicit, and auditable. KYCPass proves the claim
+and keeps the document out of the transaction."
+
+## Opening hook
+
+"KYC has become the world's most expensive file-upload form. KYCPass turns it
+into a reusable, user-approved API."
+
+## Closing line
+
+"One private identity, many scoped proofs: prove the claim, keep the document."
+
 ## Recording sequence
 
 1. Open the Northstar Digital Bank account page. Explain that this is a sample
